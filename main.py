@@ -1,4 +1,5 @@
 import os
+import re
 import urllib.request
 
 import dominate
@@ -228,8 +229,12 @@ def kaasparql(kaapath):
                             olabel = row["olabel"]["value"]
                         else:
                             olabel = row["o"]["value"]
-            
-                        if row["o"]["value"][0:4] == 'http':
+                        
+                        if re.search('(\.png|\.jpg)$', row["o"]["value"]):
+                            img(style="max-width:250px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % row["o"]["value"])  
+                        elif re.search('(\.pdf|.PDF|\.tif|\.TIF|\.tiff|\.TIFF)$', row["o"]["value"]):
+                            iframe(src="http://docs.google.com/gview?url=http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s&embedded=true" % row["o"]["value"],style="width:600px; height:500px;",frameborder="0")
+                        elif row["o"]["value"][0:4] == 'http':
                             a(olabel,href = row["o"]["value"].replace('http://kenchreai.org',''))
                         else:
                             span(olabel)
