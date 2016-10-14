@@ -5,4 +5,5 @@ gunicorn==19.4.5
 rdflib==4.2.1
 #whitenoise==2.0.6
 Jinja2==2.7.1
+SPARQLWrapper>=1.7.6
 Werkzeug==0.9.4
