@@ -335,6 +335,7 @@ OPTIONAL { ?s kaaont:file|kaaont:drawing|kaaont:photograph ?sthumb . }
                 curlabel = ''
                 for row in ftresult["results"]["bindings"]:
                     if curlabel != row["slabel"]["value"]:
+                        curlabel = row["slabel"]["value"]
                         if first == 1:
                             first = 0
                         else:
@@ -342,6 +343,7 @@ OPTIONAL { ?s kaaont:file|kaaont:drawing|kaaont:photograph ?sthumb . }
                         
                         a(row["slabel"]["value"], href=row["s"]["value"].replace('http://kenchreai.org',''))
                         br()
+
                     
                     try:
                         thumb = row["sthumb"]["value"]
