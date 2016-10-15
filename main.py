@@ -283,7 +283,7 @@ def kaasparql(kaapath = 'kaa'):
                                 
                             if thumb != '':
                                 img(style="margin-left:1em;margin-top:.5em;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb)  
-                                br()
+                                
 
 
                 
