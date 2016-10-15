@@ -139,10 +139,16 @@ def vocabulary(ontpath):
     return vdoc.render()
     
 @app.route('/kaa/<path:kaapath>')
-def kaasparql(kaapath):
-         
+@app.route('/kaa')
+def kaasparql(kaapath = 'kaa'):
+
+    if kaapath == 'kaa':
+        uri = 'http://kenchreai.org/kaa'
+    else:
+        uri = 'http://kenchreai.org/kaa/' + kaapath
+
     kaaquery =  """SELECT ?p ?o ?plabel ?olabel  WHERE
-{ { <http://kenchreai.org/kaa/%s> ?p ?o .
+{ { <%s> ?p ?o .
  MINUS {?s kaaont:location ?o }
  MINUS {?s kaaont:observed ?o }
  MINUS {?s kaaont:same-as ?o }
@@ -153,32 +159,32 @@ def kaasparql(kaapath):
  OPTIONAL  { ?o <http://www.w3.org/2000/01/rdf-schema#label> ?olabel . }
  OPTIONAL  { ?p <http://www.w3.org/2000/01/rdf-schema#label> ?plabel . }
   }\
- UNION { <http://kenchreai.org/kaa/%s> kaaont:observed ?s . ?s ?p ?o . } } ORDER BY ?s """ % (kaapath,kaapath)
+ UNION { <%s> kaaont:observed ?s . ?s ?p ?o . } } ORDER BY ?s """ % (uri,uri)
            
     endpoint.setQuery(kaaquery)
     endpoint.setReturnFormat(JSON)
     kaaresult = endpoint.query().convert()
 
-    physicalquery = """SELECT  ?s ?p ?stitle ?sthumb WHERE
- { { <http://kenchreai.org/kaa/%s> <http://kenchreai.org/kaa/ontology/has-physical-part> ?s .
-  OPTIONAL  { ?s <http://kenchreai.org/kaa/ontology/next> <http://kenchreai.org/kaa/%s> .
- ?s ?p <http://kenchreai.org/kaa/%s> }
- OPTIONAL  { ?s <http://www.w3.org/2000/01/rdf-schema#label> ?stitle . }
- OPTIONAL  { ?s <http://xmlns.com/foaf/0.1/name> ?stitle . }
+    physicalquery = """SELECT  ?s ?p ?slabel ?sthumb WHERE
+ { { <%s> <http://kenchreai.org/kaa/ontology/has-physical-part> ?s .
+  OPTIONAL  { ?s <http://kenchreai.org/kaa/ontology/next> <%s> .
+ ?s ?p <%s> }
+ OPTIONAL  { ?s <http://www.w3.org/2000/01/rdf-schema#label> ?slabel . }
+ OPTIONAL  { ?s <http://xmlns.com/foaf/0.1/name> ?slabel . }
  OPTIONAL { ?s kaaont:file|kaaont:pagescan|kaaont:photograph|kaaont:drawing ?sthumb . FILTER regex(?sthumb, 'png$')  }
- } } ORDER BY ?s""" % (kaapath,kaapath,kaapath)
+ } } ORDER BY ?s""" % (uri,uri,uri)
     reasoner.setQuery(physicalquery)
     reasoner.setReturnFormat(JSON)
     physicalresult = reasoner.query().convert()
 
 
-    conceptualquery = """SELECT  ?s ?p ?stitle ?sthumb WHERE
- { {  { <http://kenchreai.org/kaa/%s> <http://kenchreai.org/kaa/ontology/has-logical-part> ?s . }
- UNION  { ?s <http://kenchreai.org/kaa/ontology/same-as> <http://kenchreai.org/kaa/%s> .  }
- OPTIONAL  { ?s <http://kenchreai.org/kaa/ontology/next> <http://kenchreai.org/kaa/%s> . ?s ?p <http://kenchreai.org/kaa/%s> }
- OPTIONAL  { ?s <http://www.w3.org/2000/01/rdf-schema#label> ?stitle . }\
+    conceptualquery = """SELECT  ?s ?p ?slabel ?sthumb WHERE
+ { {  { <%s> <http://kenchreai.org/kaa/ontology/has-logical-part> ?s . }
+ UNION  { ?s <http://kenchreai.org/kaa/ontology/same-as> <%s> .  }
+ OPTIONAL  { ?s <http://kenchreai.org/kaa/ontology/next> <%s> . ?s ?p <%s> }
+ OPTIONAL  { ?s <http://www.w3.org/2000/01/rdf-schema#label> ?slabel . }\
  OPTIONAL { ?s kaaont:file|kaaont:pagescan|kaaont:photograph|kaaont:drawing ?sthumb . FILTER regex(?sthumb, 'png$') } }\
- FILTER (!isBlank(?s))  } ORDER BY ?s""" % (kaapath,kaapath,kaapath,kaapath)
+ FILTER (!isBlank(?s))  } ORDER BY ?s""" % (uri,uri,uri,uri)
     reasoner.setQuery(conceptualquery)
     reasoner.setReturnFormat(JSON)
     conceptualresult = reasoner.query().convert()
@@ -186,14 +192,17 @@ def kaasparql(kaapath):
 
     kaalabel = """SELECT ?slabel 
            WHERE {
-              <http://kenchreai.org/kaa/%s> rdfs:label ?slabel
-           }""" % (kaapath)
+              <%s> rdfs:label ?slabel
+           }""" % (uri)
     endpoint.setQuery(kaalabel)
     endpoint.setReturnFormat(JSON)
     labelresult = endpoint.query().convert()
 
+    label = ''
     for result in labelresult["results"]["bindings"]:
         label = result["slabel"]["value"]
+    if label == '':
+        label = 'kaa:' + kaapath
 
     kaadoc = dominate.document(title="Kenchreai Archaeological Archive: %s" % (label))
     kaaheader(kaadoc, label)
@@ -246,37 +255,47 @@ def kaasparql(kaapath):
 
                 if len(conceptualresult["results"]["bindings"]) > 0:
                     dt('Linked to')
+                    curlabel = ''
+                    first = 1
                     with dd():
                         for row in conceptualresult["results"]["bindings"]:
-                            span(a(row["stitle"]["value"], rel="dcterms:hasPart", href = row["s"]["value"].replace('http://kenchreai.org','')))
-                            br()
+                            try:
+                                label = row["slabel"]["value"]
+                            except:
+                                label = re.sub('http://kenchreai.org/kaa/','kaa:',row["s"]["value"])
+                            
+                            
+                            if curlabel != label:
+                                if first == 1:
+                                    first = 0
+                                else:
+                                    hr()
+                                    
+                                span(a(label, rel="dcterms:hasPart", href = row["s"]["value"].replace('http://kenchreai.org','')))
+                                br()
+                                curlabel = label
+                                
+                            try:
+                                thumb = row["sthumb"]["value"]
+                                thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
+                            except:
+                                thumb = ''
+                                
+                            if thumb != '':
+                                img(style="margin-left:1em;margin-top:.5em;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb)  
+                                br()
 
-
-
-#                     with dd():
-#                         for part in eparts:
-#                             span(a(str(part.label), rel="dcterms:hasPart", href = str(part.part).replace('http://digitalhumanities.umass.edu','')))
-#                             br()
-#                 
-#                 objlength = len(eobjects)
-#                 if objlength > 0:
-#                     lenstr = ''
-#                     if objlength == 1000:
-#                         lenstr = '(first 1000)'
-#                     dt("Property of %s" % (lenstr))
-#                     with dd():
-#                          for s_p in eobjects:
-#                             a(str(s_p.slabel), href= str(s_p.s).replace('http://digitalhumanities.umass.edu',''))
-#                             span(" via ")
-#                             span(str(s_p.plabel))
-#                             br()
 
                 
-# with footer(cls="footer"):
-# with div(cls="container"):
-# with p(cls="text-muted"):
-# span("KAA.")
-
+        with footer(cls="footer"):
+            with div(cls="container"):
+                with p(cls="text-muted"):
+                    span("©2016 The ")
+                    a("American Excavations at Kenchreai", href="http://www.kenchreai.org")
+                    span(". Data and images available for non-commercial, personal use only. See ")
+                    a("Github", href="https://github.com/kenchreai/kaa-ttl")
+                    span(" for Turtle (TRIG) formatted source files.")
+                    a("🔗" , href="https://kenchreai-data-editor.herokuapp.com/#/detail/%s" % kaapath)
                 
     return kaadoc.render()
 
@@ -284,10 +303,11 @@ def kaasparql(kaapath):
 def fulltextsearch():
     q = request.args.get('q')
     
-    ftquery = """SELECT DISTINCT ?s ?slabel ?score
+    ftquery = """SELECT DISTINCT ?s ?slabel ?sthumb ?score
 WHERE {
 ?s ?p ?l.
 ?s rdfs:label ?slabel .
+OPTIONAL { ?s kaaont:file|kaaont:drawing|kaaont:photograph ?sthumb . }
 (?l ?score) <tag:stardog:api:property:textMatch> '%s'.
 }""" % (q)
 
@@ -311,10 +331,37 @@ WHERE {
         with dl(cls="dl-horizontal"):
             dt("Results")
             with dd():
+                first = 1
+                curlabel = ''
                 for row in ftresult["results"]["bindings"]:
-                    a(row["slabel"]["value"], href=row["s"]["value"].replace('http://kenchreai.org',''))
-                    br()
-                
+                    if curlabel != row["slabel"]["value"]:
+                        if first == 1:
+                            first = 0
+                        else:
+                            hr()
+                        
+                        a(row["slabel"]["value"], href=row["s"]["value"].replace('http://kenchreai.org',''))
+                        br()
+                    
+                    try:
+                        thumb = row["sthumb"]["value"]
+                        thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
+                    except:
+                        thumb = ''
+                        
+                    if re.search('(\.png|\.jpg)$', thumb):
+                        img(style="margin-left:1em;margin-top:.5em;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb)  
+
+        
+        with footer(cls="footer"):
+            with div(cls="container"):
+                with p(cls="text-muted"):
+                    span("©2016 The ")
+                    a("American Excavations at Kenchreai", href="http://www.kenchreai.org")
+                    span(". Data and images available for non-commercial, personal use only. See ")
+                    a("Github", href="https://github.com/kenchreai/kaa-ttl")
+                    span(" for Turtle (TRIG) formatted source files.")
+   
     return ftdoc.render()
     
 
