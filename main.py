@@ -250,20 +250,15 @@ def kaasparql(kaapath = 'kaa'):
 
                           
                 if len(physicalresult["results"]["bindings"]) > 0:
-                    dt('Has parts')
-                    dd("Worked...")
-
-                if len(conceptualresult["results"]["bindings"]) > 0:
-                    dt('Linked to')
+                    dt('Has physical part')
                     curlabel = ''
                     first = 1
                     with dd():
-                        for row in conceptualresult["results"]["bindings"]:
+                        for row in physicalresult["results"]["bindings"]:
                             try:
                                 label = row["slabel"]["value"]
                             except:
                                 label = re.sub('http://kenchreai.org/kaa/','kaa:',row["s"]["value"])
-                            
                             
                             if curlabel != label:
                                 if first == 1:
@@ -283,10 +278,39 @@ def kaasparql(kaapath = 'kaa'):
                                 
                             if thumb != '':
                                 img(style="margin-left:1em;margin-top:.5em;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb)  
+
+
+                if len(conceptualresult["results"]["bindings"]) > 0:
+                    dt('Linked to')
+                    curlabel = ''
+                    first = 1
+                    with dd():
+                        for row in conceptualresult["results"]["bindings"]:
+                            try:
+                                label = row["slabel"]["value"]
+                            except:
+                                label = re.sub('http://kenchreai.org/kaa/','kaa:',row["s"]["value"])
+                                                    
+                            if curlabel != label:
+                                if first == 1:
+                                    first = 0
+                                else:
+                                    hr()
+                                    
+                                span(a(label, rel="dcterms:hasPart", href = row["s"]["value"].replace('http://kenchreai.org','')))
+                                br()
+                                curlabel = label
                                 
-
-
-                
+                            try:
+                                thumb = row["sthumb"]["value"]
+                                thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
+                            except:
+                                thumb = ''
+                                
+                            if thumb != '':
+                                img(style="margin-left:1em;margin-top:.5em;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb)  
+                                
+        # <footer>       
         with footer(cls="footer"):
             with div(cls="container"):
                 with p(cls="text-muted"):
@@ -309,7 +333,7 @@ WHERE {
 ?s rdfs:label ?slabel .
 OPTIONAL { ?s kaaont:file|kaaont:drawing|kaaont:photograph ?sthumb . }
 (?l ?score) <tag:stardog:api:property:textMatch> '%s'.
-}""" % (q)
+} LIMIT 1000""" % (q)
 
     endpoint.setQuery(ftquery)
     endpoint.setReturnFormat(JSON)
