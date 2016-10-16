@@ -273,9 +273,35 @@ def fulltextsearch():
            with div(cls="container-fluid"):
                with div(cls="navbar-header"):
                    a("KAA: Full-Text Search" , href="/kaa",cls="navbar-brand")
-                   with form(cls="navbar-form navbar-right", role="search"):
+                   with form(cls="navbar-form navbar-left", role="search"):
                        with div(cls="form-group"):
                            input(id="q", name="q", type="text",cls="form-control",placeholder="Search...")
+                   with ul(cls="nav navbar-nav"):
+                       with li(cls="dropdown"):
+                           a("Example Searches", href="#",cls="dropdown-toggle", data_toggle="dropdown")
+                           with ul(cls="dropdown-menu", role="menu"):
+                               li(a('+ke +1221', href="/api/full-text-search?q=%2Bke%20%2B1221"))
+                               li(a('+corinthian +lamp', href="/api/full-text-search?q=%2Bcorinthian%20%2Blamp"))
+                               li(a('+gold -ring', href="/api/full-text-search?q=%2Bgold%20%2Dring"))
+                               li(a('"ke 1221"', href="/api/full-text-search?q=%22ke%201221%22"))
+# 
+#                   <li><a href="http://kenchreai.org/kaa">KAA Start</a></li>
+#                   <li><a href="http://kenchreai.org/kaa/ke">The Chicago/Indiana Excavation Records</a></li>
+#                   <li><a href="http://kenchreai.org/kaa/kenchreai">Kenchreai (The Place)</a></li>
+# 
+#                   <li class="divider"></li>
+# 
+#                   <li><a href="http://kenchreai.org/kaa/modern-chronology">Modern Chronology</a></li>
+#                   <li><a href="http://kenchreai.org/kaa/people">People</a></li>
+#                   <li><a href="http://kenchreai.org/kaa/typology">Typology</a></li>
+# 
+#                   <li class="divider"></li>
+# 
+# 
+#                  <li><a href="http://kenchreai.org/kaa/ke/inventory-book">Chicago/Indiana Inventoried Objects</a></li>
+#                 </ul>
+#                </li>
+
         
         with dl(cls="dl-horizontal"):
             
