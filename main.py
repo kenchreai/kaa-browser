@@ -284,24 +284,7 @@ def fulltextsearch():
                                li(a('+corinthian +lamp', href="/api/full-text-search?q=%2Bcorinthian%20%2Blamp"))
                                li(a('+gold -ring', href="/api/full-text-search?q=%2Bgold%20%2Dring"))
                                li(a('"ke 1221"', href="/api/full-text-search?q=%22ke%201221%22"))
-# 
-#                   <li><a href="http://kenchreai.org/kaa">KAA Start</a></li>
-#                   <li><a href="http://kenchreai.org/kaa/ke">The Chicago/Indiana Excavation Records</a></li>
-#                   <li><a href="http://kenchreai.org/kaa/kenchreai">Kenchreai (The Place)</a></li>
-# 
-#                   <li class="divider"></li>
-# 
-#                   <li><a href="http://kenchreai.org/kaa/modern-chronology">Modern Chronology</a></li>
-#                   <li><a href="http://kenchreai.org/kaa/people">People</a></li>
-#                   <li><a href="http://kenchreai.org/kaa/typology">Typology</a></li>
-# 
-#                   <li class="divider"></li>
-# 
-# 
-#                  <li><a href="http://kenchreai.org/kaa/ke/inventory-book">Chicago/Indiana Inventoried Objects</a></li>
-#                 </ul>
-#                </li>
-
+                               li(a('fish*', href="/api/full-text-search?q=fish%2A"))
         
         with dl(cls="dl-horizontal"):
             
