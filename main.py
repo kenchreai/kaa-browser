@@ -146,8 +146,12 @@ def kaasparql(kaapath = 'kaa'):
         
         with dl(cls="dl-horizontal"):
                  dt()
-                 dd(strong(label), cls="large")
-        
+                 with dd(cls="large", __pretty=False):
+                     strong(label)
+                     span(' [')
+                     a('permalink', href=uri)
+                     span(']')
+
         with div(cls="container", about="/kaa/%s" % (kaapath)):
             # p(str(kaaresult))
             with dl(cls="dl-horizontal"):
