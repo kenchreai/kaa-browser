@@ -144,17 +144,16 @@ def kaasparql(kaapath = 'kaa'):
                        with div(cls="form-group"):
                            input(id="q", name="q", type="text",cls="form-control",placeholder="Search...")
         
-        with dl(cls="dl-horizontal"):
-                 dt()
-                 with dd(cls="large", __pretty=False):
-                     strong(label)
-                     span(' [')
-                     a('permalink', href=uri)
-                     span(']')
-
-        with div(cls="container", about="/kaa/%s" % (kaapath)):
+        with div(cls="container", about="/kaa/%s" % (kaapath), style="margin-top:.5em"):
             # p(str(kaaresult))
             with dl(cls="dl-horizontal"):
+                dt(" ")
+                with dd(cls="large", __pretty=False):
+                    strong(label)
+                    span(' [')
+                    a('permalink', href=uri)
+                    span(']')
+
                 for row in kaaresult["results"]["bindings"]:
                     if row["p"]["value"] == 'http://www.w3.org/2000/01/rdf-schema#label':
                         continue
@@ -186,9 +185,9 @@ def kaasparql(kaapath = 'kaa'):
                     first = 1
                     with dd():
                         for row in physicalresult["results"]["bindings"]:
-                            try:
+                            if "slabel" in row.keys():
                                 label = row["slabel"]["value"]
-                            except:
+                            else:
                                 label = re.sub('http://kenchreai.org/kaa/','kaa:',row["s"]["value"])
                             
                             if curlabel != label:
@@ -201,10 +200,10 @@ def kaasparql(kaapath = 'kaa'):
                                 br()
                                 curlabel = label
                                 
-                            try:
+                            if "sthumb" in row.keys():
                                 thumb = row["sthumb"]["value"]
                                 thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
-                            except:
+                            else:
                                 thumb = ''
                                 
                             if thumb != '':
