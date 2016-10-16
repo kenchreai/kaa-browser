@@ -154,7 +154,7 @@ def kaasparql(kaapath = 'kaa'):
                 for row in kaaresult["results"]["bindings"]:
                     if row["p"]["value"] == 'http://www.w3.org/2000/01/rdf-schema#label':
                         continue
-                    elif row["plabel"]["value"] != 'None':
+                    elif "plabel" in row.keys():
                         dt(row["plabel"]["value"], style="white-space: normal")
                     else:
                         dt(i(row["p"]["value"]), style="white-space: normal")
