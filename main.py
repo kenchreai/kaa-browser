@@ -38,7 +38,6 @@ reasoner = SPARQLWrapper("http://kenchreai.org/reasoner/kenchreai/query")
 
 def kaaheader(doc, kaapath = ''):
     
-    # doc['xmlns'] = "http://www.w3.org/1999/xhtml" # Dominate doesn't produce closed no-content tags
     doc.head += meta(charset="utf-8")
     doc.head += meta(http_equiv="X-UA-Compatible", content="IE=edge")
     doc.head += meta(name="viewport", content="width=device-width, initial-scale=1")
@@ -49,95 +48,22 @@ def kaaheader(doc, kaapath = ''):
     doc.head += style("body { padding-top: 60px; }")
     doc.head += meta(name="DC.title",lang="en",content="%s" % (kaapath) )
     doc.head += meta(name="DC.identifier", content="http://kenchreai.org/kaa/%s" % kaapath)
-        
 
-@app.route('/kaa/ontology/<path:ontpath>')
-def vocabulary(ontpath):
-    vresult = g.query(
-        """SELECT ?p ?o ?plabel ?olabel
-           WHERE {
-              p-lod-v:%s ?p ?o .
-              OPTIONAL { ?p rdfs:label ?plabel }
-              OPTIONAL { ?o rdfs:label ?olabel }
-           }""" % (vocab), initNs = ns)
-
-    vlabel = g.query(
-        """SELECT ?slabel 
-           WHERE {
-              p-lod-v:%s rdfs:label ?slabel
-           }""" % (vocab), initNs = ns)
-           
-    vinstances = g.query(
-        """SELECT ?instance ?label
-           WHERE {
-              ?instance rdf:type p-lod-v:%s .
-              ?instance rdfs:label ?label .
-           } ORDER BY ?instance""" % (vocab), initNs = ns)
-           
-    vsubclasses = g.query(
-        """SELECT ?subclass ?label
-           WHERE {
-              ?subclass rdfs:subClassOf p-lod-v:%s .
-              ?subclass rdfs:label ?label .
-           } ORDER BY ?label""" % (vocab), initNs = ns)    
-
-    vdoc = dominate.document(title="Pompeii LOD: %s" % (vocab))
-    kaaheader(vdoc, vocab)
-
-    with vdoc:
-
-        with nav(cls="navbar navbar-default navbar-fixed-top"):
-           with div(cls="container-fluid"):
-               with div(cls="navbar-header"):
-                   a("P-LOD Linked Open Data for Pompeii: Vocabulary", href="/p-lod/entities/pompeii",cls="navbar-brand")
-
-        with div(cls="container"):
-            with dl(cls="dl-horizontal"):
-                dt()
-                for row in vlabel:
-                    dd(strong(str(row.slabel), cls="large"))
-
-                for row in vresult:
-                    if str(row.p) == 'http://www.w3.org/2000/01/rdf-schema#label':
-                        continue
-                    elif str(row.plabel) != 'None':
-                        dt(str(row.plabel)+":")
-                    else:
-                        dt(i(str(row.p)), style = "margin-left:.25em")
+def kaafooter(doc, kaapath = '', editorLink = False ):
+    with doc:
+        with footer(cls="footer"):
+            with div(cls="container"):
+                with p(cls="text-muted"):
+                    span("©2016 The ")
+                    a("American Excavations at Kenchreai", href="http://www.kenchreai.org")
+                    span(". Data and images available for non-commercial, personal use only. See ")
+                    a("Github", href="https://github.com/kenchreai/kaa-ttl")
+                    span(" for Turtle (TRIG) formatted source files.")
                 
-                    with dd():
-                        if str(row.olabel) != "None":
-                            olabel = str(row.olabel)
-                        else:
-                            olabel = str(row.o)
-                
-                        if str(row.o)[0:4] == 'http':
-                            a(olabel,href = str(row.o).replace('http://digitalhumanities.umass.edu',''))
-                        else:
-                            span(olabel)
-        
-                if len(vinstances) > 0:
-                    dt('Entities')
-                    with dd():
-                        for instance in vinstances:
-                            span(a(str(instance.label), href = str(instance.instance).replace('http://digitalhumanities.umass.edu','')))
-                            br()
-        
-                if len(vsubclasses) > 0:
-                    dt('Subclasses')
-                    with dd():
-                        for subclass in vsubclasses:
-                            span(a(str(subclass.label), href = str(subclass.subclass).replace('http://digitalhumanities.umass.edu','')))
-                            br()
-
-            hr()
-            with p():
-                span("P-LOD is under construction and is overseen by Steven Ellis, Sebastian Heath and Eric Poehler. Data available on ")
-                a("Github", href = "https://github.com/p-lod/p-lod")
-                span(".")  
-                 
-    return vdoc.render()
-    
+                    if editorLink:
+                        a("🔗" , href="https://kenchreai-data-editor.herokuapp.com/#/detail/%s" % kaapath)
+                    
+                        
 @app.route('/kaa/<path:kaapath>')
 @app.route('/kaa')
 def kaasparql(kaapath = 'kaa'):
@@ -310,16 +236,7 @@ def kaasparql(kaapath = 'kaa'):
                             if thumb != '':
                                 img(style="margin-left:1em;margin-top:.5em;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb)  
                                 
-        # <footer>       
-        with footer(cls="footer"):
-            with div(cls="container"):
-                with p(cls="text-muted"):
-                    span("©2016 The ")
-                    a("American Excavations at Kenchreai", href="http://www.kenchreai.org")
-                    span(". Data and images available for non-commercial, personal use only. See ")
-                    a("Github", href="https://github.com/kenchreai/kaa-ttl")
-                    span(" for Turtle (TRIG) formatted source files.")
-                    a("🔗" , href="https://kenchreai-data-editor.herokuapp.com/#/detail/%s" % kaapath)
+    kaafooter(kaadoc, kaapath, True)
                 
     return kaadoc.render()
 
@@ -381,15 +298,7 @@ def fulltextsearch():
                 except:
                     pass
         
-        with footer(cls="footer"):
-            with div(cls="container"):
-                with p(cls="text-muted"):
-                    span("©2016 The ")
-                    a("American Excavations at Kenchreai", href="http://www.kenchreai.org")
-                    span(". Data and images available for non-commercial, personal use only. See ")
-                    a("Github", href="https://github.com/kenchreai/kaa-ttl")
-                    span(" for Turtle (TRIG) formatted source files.")
-   
+    kaafooter(ftdoc)
     return ftdoc.render()
     
 
