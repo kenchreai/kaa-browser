@@ -326,18 +326,18 @@ def kaasparql(kaapath = 'kaa'):
 @app.route('/api/full-text-search')
 def fulltextsearch():
     q = request.args.get('q')
-    
-    ftquery = """SELECT DISTINCT ?s ?slabel ?sthumb ?score
-WHERE {
-?s ?p ?l.
-?s rdfs:label ?slabel .
-OPTIONAL { ?s kaaont:file|kaaont:drawing|kaaont:photograph ?sthumb . }
-(?l ?score) <tag:stardog:api:property:textMatch> '%s'.
-} LIMIT 1000""" % (q)
+    if q != '':
+        ftquery = """SELECT DISTINCT ?s ?slabel ?sthumb ?score
+    WHERE {
+    ?s ?p ?l.
+    ?s rdfs:label ?slabel .
+    OPTIONAL { ?s kaaont:file|kaaont:drawing|kaaont:photograph ?sthumb . }
+    (?l ?score) <tag:stardog:api:property:textMatch> '%s'.
+    } LIMIT 1000""" % (q)
 
-    endpoint.setQuery(ftquery)
-    endpoint.setReturnFormat(JSON)
-    ftresult = endpoint.query().convert()
+        endpoint.setQuery(ftquery)
+        endpoint.setReturnFormat(JSON)
+        ftresult = endpoint.query().convert()
 
     ftdoc = dominate.document(title="Kenchreai Archaeological Archive: Full-Text Search")
     kaaheader(ftdoc, '')
@@ -357,27 +357,29 @@ OPTIONAL { ?s kaaont:file|kaaont:drawing|kaaont:photograph ?sthumb . }
             with dd():
                 first = 1
                 curlabel = ''
-                for row in ftresult["results"]["bindings"]:
-                    if curlabel != row["slabel"]["value"]:
-                        curlabel = row["slabel"]["value"]
-                        if first == 1:
-                            first = 0
-                        else:
-                            hr()
+                try:
+                    for row in ftresult["results"]["bindings"]:
+                        if curlabel != row["slabel"]["value"]:
+                            curlabel = row["slabel"]["value"]
+                            if first == 1:
+                                first = 0
+                            else:
+                                hr()
                         
-                        a(row["slabel"]["value"], href=row["s"]["value"].replace('http://kenchreai.org',''))
-                        br()
+                            a(row["slabel"]["value"], href=row["s"]["value"].replace('http://kenchreai.org',''))
+                            br()
 
                     
-                    try:
-                        thumb = row["sthumb"]["value"]
-                        thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
-                    except:
-                        thumb = ''
+                        try:
+                            thumb = row["sthumb"]["value"]
+                            thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
+                        except:
+                            thumb = ''
                         
-                    if re.search('(\.png|\.jpg)$', thumb):
-                        img(style="margin-left:1em;margin-top:.5em;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb)  
-
+                        if re.search('(\.png|\.jpg)$', thumb):
+                            img(style="margin-left:1em;margin-top:.5em;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb)  
+                except:
+                    pass
         
         with footer(cls="footer"):
             with div(cls="container"):
