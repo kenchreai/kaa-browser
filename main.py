@@ -285,6 +285,7 @@ def fulltextsearch():
                                li(a('+gold -ring', href="/api/full-text-search?q=%2Bgold%20%2Dring"))
                                li(a('"ke 1221"', href="/api/full-text-search?q=%22ke%201221%22"))
                                li(a('fish*', href="/api/full-text-search?q=fish%2A"))
+                               li(a('ΔΙΟΝΕΙΚΟΥ', href="/api/full-text-search?q=ΔΙΟΝΕΙΚΟΥ"))
         
         with dl(cls="dl-horizontal"):
             
