@@ -85,7 +85,7 @@ def kaasparql(kaapath = 'kaa'):
  OPTIONAL  { ?o <http://www.w3.org/2000/01/rdf-schema#label> ?olabel . }
  OPTIONAL  { ?p <http://www.w3.org/2000/01/rdf-schema#label> ?plabel . }
   }\
- UNION { <%s> kaaont:observed ?s . ?s ?p ?o . } } ORDER BY ?s """ % (uri,uri)
+ UNION { <%s> kaaont:observed ?s . ?s ?p ?o . } } ORDER BY ?s ?plabel""" % (uri,uri)
            
     endpoint.setQuery(kaaquery)
     endpoint.setReturnFormat(JSON)
@@ -165,9 +165,9 @@ def kaasparql(kaapath = 'kaa'):
                         else:
                             olabel = row["o"]["value"]
                         
-                        if re.search('(\.png|\.jpg)$', row["o"]["value"]):
+                        if re.search('(\.png|\.jpg)$', row["o"]["value"], flags= re.I):
                             img(style="max-width:250px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % row["o"]["value"])  
-                        elif re.search('(\.pdf|.PDF|\.tif|\.TIF|\.tiff|\.TIFF)$', row["o"]["value"]):
+                        elif re.search('(\.pdf|\.tif|\.tiff)$', row["o"]["value"], flags= re.I):
                             iframe(src="http://docs.google.com/gview?url=http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s&embedded=true" % row["o"]["value"],style="width:600px; height:500px;",frameborder="0")
                         elif row["o"]["value"][0:4] == 'http':
                             a(olabel,href = row["o"]["value"].replace('http://kenchreai.org',''))
@@ -229,7 +229,10 @@ def kaasparql(kaapath = 'kaa'):
                                 
                             try:
                                 thumb = row["sthumb"]["value"]
-                                thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
+                                if '/' in thumb:
+                                    thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
+                                else:
+                                    thumb = 'thumbs/' + thumb
                             except:
                                 thumb = ''
                                 
@@ -244,13 +247,13 @@ def kaasparql(kaapath = 'kaa'):
 def fulltextsearch():
     q = request.args.get('q')
     if q != '':
-        ftquery = """SELECT DISTINCT ?s ?slabel ?sthumb ?score
+        ftquery = """SELECT ?s ?slabel ?sthumb
     WHERE {
     ?s ?p ?l.
     ?s rdfs:label ?slabel .
-    OPTIONAL { ?s kaaont:file|kaaont:drawing|kaaont:photograph ?sthumb . }
+    OPTIONAL { ?s kaaont:drawing|kaaont:photograph ?sthumb . }
     (?l ?score) <tag:stardog:api:property:textMatch> '%s'.
-    } LIMIT 1000""" % (q)
+    }""" % (q)
 
         endpoint.setQuery(ftquery)
         endpoint.setReturnFormat(JSON)
@@ -285,17 +288,21 @@ def fulltextsearch():
                         
                             a(row["slabel"]["value"], href=row["s"]["value"].replace('http://kenchreai.org',''))
                             br()
-
-                    
-                        try:
-                            thumb = row["sthumb"]["value"]
-                            thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
-                        except:
-                            thumb = ''
                         
-                        if re.search('(\.png|\.jpg)$', thumb):
-                            img(style="margin-left:1em;margin-top:.5em;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb)  
-                except:
+                            try:
+                                thumb = row["sthumb"]["value"]
+                                comment(thumb)
+                                if '/' in thumb:
+                                    thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
+                                else:
+                                    thumb = 'thumbs/' + thumb
+                            except KeyError:
+                                thumb = ''
+                            
+                            if re.search(r'(.png|.jpg)',thumb, flags= re.I):
+                                img(style="margin-left:1em;margin-top:.5em;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb)  
+ 
+                except KeyError:
                     pass
         
     kaafooter(ftdoc)
