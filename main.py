@@ -1,6 +1,7 @@
 import os
 import re
 import urllib.request
+import html
 
 import dominate
 from dominate.tags import *
@@ -246,7 +247,7 @@ def kaasparql(kaapath = 'kaa'):
 @app.route('/api/full-text-search')
 def fulltextsearch():
     q = request.args.get('q')
-    if q != '':
+    if q != '' and q is not None:
         ftquery = """SELECT ?s ?slabel ?sthumb
     WHERE {
     ?s ?p ?l.
@@ -273,6 +274,13 @@ def fulltextsearch():
                            input(id="q", name="q", type="text",cls="form-control",placeholder="Search...")
         
         with dl(cls="dl-horizontal"):
+            
+            dt("Search")
+            if q != '' and q is not None:
+                dd(q)
+            else:
+                dd('<nothing entered>')
+            
             dt("Results")
             with dd():
                 first = 1
@@ -302,7 +310,7 @@ def fulltextsearch():
                             if re.search(r'(.png|.jpg)',thumb, flags= re.I):
                                 img(style="margin-left:1em;margin-top:.5em;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb)  
  
-                except KeyError:
+                except (KeyError, UnboundLocalError) :
                     pass
         
     kaafooter(ftdoc)
