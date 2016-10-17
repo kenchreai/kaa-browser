@@ -145,17 +145,23 @@ def kaasparql(kaapath = 'kaa'):
                            input(id="q", name="q", type="text",cls="form-control",placeholder="Search...")
         
         with div(cls="container", about="/kaa/%s" % (kaapath), style="margin-top:.5em"):
-            # p(str(kaaresult))
+            
+            # declare the next variable
+            next = None
             with dl(cls="dl-horizontal"):
                 dt(" ")
                 with dd(cls="large", __pretty=False):
                     strong(label)
                     span(' [')
                     a('permalink', href=uri)
-                    span(']')
+                    span('] ')
+                    span(id="next")
 
                 for row in kaaresult["results"]["bindings"]:
                     if row["p"]["value"] == 'http://www.w3.org/2000/01/rdf-schema#label':
+                        continue
+                    elif row["p"]["value"] == 'http://kenchreai.org/kaa/ontology/next':
+                        next = row["o"]["value"]
                         continue
                     elif "plabel" in row.keys():
                         dt(row["plabel"]["value"], style="white-space: normal")
@@ -177,12 +183,15 @@ def kaasparql(kaapath = 'kaa'):
                             a(olabel,href = row["o"]["value"].replace('http://kenchreai.org',''))
                         else:
                             span(olabel)
-
+                                    
                           
                 if len(physicalresult["results"]["bindings"]) > 0:
                     dt('Has physical part')
                     curlabel = ''
                     first = 1
+                    # compile all URIs into a single dd element
+                    # issue: i'd like to be able to indicate how many resources are parts. It's not 
+                    # len(conceptualresult["results"]["bindings"]) as that repeats ?s
                     with dd():
                         for row in physicalresult["results"]["bindings"]:
                             if "slabel" in row.keys():
@@ -200,13 +209,9 @@ def kaasparql(kaapath = 'kaa'):
                                 br()
                                 curlabel = label
                                 
-                            if "sthumb" in row.keys():
+                            if 'sthumb' in row.keys():
                                 thumb = row["sthumb"]["value"]
                                 thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
-                            else:
-                                thumb = ''
-                                
-                            if thumb != '':
                                 img(style="margin-left:1em;margin-top:.5em;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb)  
 
 
@@ -214,11 +219,14 @@ def kaasparql(kaapath = 'kaa'):
                     dt('Linked to')
                     curlabel = ''
                     first = 1
+                    # compile all URIs into a single dd element
+                    # issue: i'd like to be able to indicate how many resources are linked to. It's not 
+                    # len(conceptualresult["results"]["bindings"]) as that repeats ?s
                     with dd():
                         for row in conceptualresult["results"]["bindings"]:
-                            try:
+                            if 'slabel' in row.keys():
                                 label = row["slabel"]["value"]
-                            except:
+                            else:
                                 label = re.sub('http://kenchreai.org/kaa/','kaa:',row["s"]["value"])
                                                     
                             if curlabel != label:
@@ -231,37 +239,44 @@ def kaasparql(kaapath = 'kaa'):
                                 br()
                                 curlabel = label
                                 
-                            try:
+                            if 'sthumb' in row.keys():
                                 thumb = row["sthumb"]["value"]
                                 if '/' in thumb:
                                     thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
                                 else:
                                     thumb = 'thumbs/' + thumb
-                            except:
-                                thumb = ''
-                                
-                            if thumb != '':
                                 img(style="margin-left:1em;margin-top:.5em;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb)  
                                 
     kaafooter(kaadoc, kaapath, True)
-                
-    return kaadoc.render()
+    
+    if next is not None:         
+        return kaadoc.render()
+    else:
+        return kaadoc.render()
 
 @app.route('/api/full-text-search')
 def fulltextsearch():
     q = request.args.get('q')
+    
     if q != '' and q is not None:
-        ftquery = """SELECT ?s ?slabel ?sthumb
-    WHERE {
-    ?s ?p ?l.
-    ?s rdfs:label ?slabel .
-    OPTIONAL { ?s kaaont:drawing|kaaont:photograph ?sthumb . }
-    (?l ?score) <tag:stardog:api:property:textMatch> '%s'.
-    }""" % (q)
+        qexists = True
+    else:
+        qexists = False
+
+    if qexists == True:
+        ftquery = """SELECT DISTINCT ?s ?slabel ?sthumb
+                        WHERE {
+                        (?l ?score) <tag:stardog:api:property:textMatch> '%s'.
+                        ?s ?p ?l . 
+                        ?s rdfs:label ?slabel .
+                        OPTIONAL { ?s kaaont:drawing|kaaont:photograph ?sthumb . }
+                        
+                        }""" % (q)
 
         endpoint.setQuery(ftquery)
         endpoint.setReturnFormat(JSON)
         ftresult = endpoint.query().convert()
+    
 
     ftdoc = dominate.document(title="Kenchreai Archaeological Archive: Full-Text Search")
     kaaheader(ftdoc, '')
@@ -289,7 +304,7 @@ def fulltextsearch():
         with dl(cls="dl-horizontal"):
             
             dt("Search")
-            if q != '' and q is not None:
+            if qexists == True:
                 dd(q)
             else:
                 dd('<nothing entered>')
@@ -298,7 +313,7 @@ def fulltextsearch():
             with dd():
                 first = 1
                 curlabel = ''
-                try:
+                if qexists == True:
                     for row in ftresult["results"]["bindings"]:
                         if curlabel != row["slabel"]["value"]:
                             curlabel = row["slabel"]["value"]
@@ -310,23 +325,17 @@ def fulltextsearch():
                             a(row["slabel"]["value"], href=row["s"]["value"].replace('http://kenchreai.org',''))
                             br()
                         
-                            try:
-                                thumb = row["sthumb"]["value"]
-                                comment(thumb)
-                                if '/' in thumb:
-                                    thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
-                                else:
-                                    thumb = 'thumbs/' + thumb
-                            except KeyError:
-                                thumb = ''
-                            
-                            if re.search(r'(.png|.jpg)',thumb, flags= re.I):
+                        if 'sthumb' in row.keys():
+                            thumb = row["sthumb"]["value"]
+                            if '/' in thumb:
+                                thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
+                            else:
+                                thumb = 'thumbs/' + thumb
+                            # if re.search(r'(.png|.jpg)',thumb, flags= re.I):
                                 img(style="margin-left:1em;margin-top:.5em;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb)  
- 
-                except (KeyError, UnboundLocalError) :
-                    pass
-        
+         
     kaafooter(ftdoc)
+    
     return ftdoc.render()
     
 
