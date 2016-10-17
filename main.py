@@ -344,7 +344,8 @@ def fulltextsearch():
                                 thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
                             else:
                                 thumb = 'thumbs/' + thumb
-                            # if re.search(r'(.png|.jpg)',thumb, flags= re.I):
+                            
+                            if re.search(r'(.png|.jpg)',thumb, flags= re.I):
                                 img(style="margin-left:1em;margin-bottom:15px;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb)  
          
     kaafooter(ftdoc)
