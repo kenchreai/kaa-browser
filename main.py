@@ -189,12 +189,12 @@ def kaasparql(kaapath = 'kaa'):
                                     
                           
                 if len(physicalresult["results"]["bindings"]) > 0:
-                    dt('Has physical part')
+                    dt('Has physical parts')
                     curlabel = ''
-                    first = 1
+                    first = 0
                     # compile all URIs into a single dd element
                     # issue: i'd like to be able to indicate how many resources are parts. It's not 
-                    # len(conceptualresult["results"]["bindings"]) as that repeats ?s
+                    # len(physical["results"]["bindings"]) as that repeats ?s
                     with dd():
                         for row in physicalresult["results"]["bindings"]:
                             if "slabel" in row.keys():
@@ -203,25 +203,25 @@ def kaasparql(kaapath = 'kaa'):
                                 label = re.sub('http://kenchreai.org/kaa/','kaa:',row["s"]["value"])
                             
                             if curlabel != label:
+                                curlabel = label
                                 if first == 1:
                                     first = 0
+                                    pstyle = ''
                                 else:
-                                    hr()
-                                    
-                                span(a(label, rel="dcterms:hasPart", href = row["s"]["value"].replace('http://kenchreai.org','')))
-                                br()
-                                curlabel = label
-                                
+                                    pstyle = 'border-top: thin dotted #aaa'   
+                                                            
+                                p(a(label, style=pstyle, rel="dcterms:hasPart", href = row["s"]["value"].replace('http://kenchreai.org','')))
+      
                             if 'sthumb' in row.keys():
                                 thumb = row["sthumb"]["value"]
                                 thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
-                                img(style="margin-left:1em;margin-top:.5em;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb)  
+                                img(style="margin-left:1em;margin-bottom:15px;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb)  
 
 
                 if len(conceptualresult["results"]["bindings"]) > 0:
                     dt('Linked to')
                     curlabel = ''
-                    first = 1
+                    first = 0
                     # compile all URIs into a single dd element
                     # issue: i'd like to be able to indicate how many resources are linked to. It's not 
                     # len(conceptualresult["results"]["bindings"]) as that repeats ?s
@@ -233,14 +233,14 @@ def kaasparql(kaapath = 'kaa'):
                                 label = re.sub('http://kenchreai.org/kaa/','kaa:',row["s"]["value"])
                                                     
                             if curlabel != label:
+                                curlabel = label
                                 if first == 1:
                                     first = 0
+                                    pstyle = ''
                                 else:
-                                    hr()
+                                    pstyle = 'border-top: thin dotted #aaa;'
                                     
-                                span(a(label, rel="dcterms:hasPart", href = row["s"]["value"].replace('http://kenchreai.org','')))
-                                br()
-                                curlabel = label
+                                p(a(label, style=pstyle, rel="dcterms:hasPart", href = row["s"]["value"].replace('http://kenchreai.org','')))
                                 
                             if 'sthumb' in row.keys():
                                 thumb = row["sthumb"]["value"]
@@ -248,12 +248,12 @@ def kaasparql(kaapath = 'kaa'):
                                     thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
                                 else:
                                     thumb = 'thumbs/' + thumb
-                                img(style="margin-left:1em;margin-top:.5em;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb)  
+                                img(style="margin-left:1em;margin-bottom:15px;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb)  
                                 
     kaafooter(kaadoc, kaapath, True)
     
     if next is not None:         
-        soup =  BeautifulSoup(kaadoc.render())
+        soup =  BeautifulSoup(kaadoc.render(), "html.parser")
         asoup = BeautifulSoup('[<a href="%s">next</a>]' % next.replace('http://kenchreai.org',''), 'html.parser')
         tag = soup.find(id='next')
         tag.append(asoup)
@@ -318,20 +318,26 @@ def fulltextsearch():
             
             dt("Results")
             with dd():
-                first = 1
+                first = 0
                 curlabel = ''
                 if qexists == True:
                     for row in ftresult["results"]["bindings"]:
-                        if curlabel != row["slabel"]["value"]:
-                            curlabel = row["slabel"]["value"]
+                    
+                        if 'slabel' in row.keys():
+                            label = row["slabel"]["value"]
+                        else:
+                            label = re.sub('http://kenchreai.org/kaa/','kaa:',row["s"]["value"])
+
+                        if curlabel != label:
+                            curlabel = label
                             if first == 1:
                                 first = 0
+                                pstyle = ''
                             else:
-                                hr()
-                        
-                            a(row["slabel"]["value"], href=row["s"]["value"].replace('http://kenchreai.org',''))
-                            br()
-                        
+                                pstyle = 'border-top: thin dotted #aaa;'
+        
+                            p(a(row["slabel"]["value"], style = pstyle, href=row["s"]["value"].replace('http://kenchreai.org','')))
+                            
                         if 'sthumb' in row.keys():
                             thumb = row["sthumb"]["value"]
                             if '/' in thumb:
@@ -339,7 +345,7 @@ def fulltextsearch():
                             else:
                                 thumb = 'thumbs/' + thumb
                             # if re.search(r'(.png|.jpg)',thumb, flags= re.I):
-                                img(style="margin-left:1em;margin-top:.5em;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb)  
+                                img(style="margin-left:1em;margin-bottom:15px;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb)  
          
     kaafooter(ftdoc)
     
@@ -365,6 +371,3 @@ def geojson_entity(kaapath):
 @app.route('/')
 def index():
     return redirect("http://www.kenchreai.org/", code=302)
-    
-
-    
