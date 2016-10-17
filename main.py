@@ -4,6 +4,9 @@ import urllib.request
 import html
 
 import dominate
+
+from bs4 import BeautifulSoup
+
 from dominate.tags import *
 
 from flask import Flask
@@ -250,7 +253,11 @@ def kaasparql(kaapath = 'kaa'):
     kaafooter(kaadoc, kaapath, True)
     
     if next is not None:         
-        return kaadoc.render()
+        soup =  BeautifulSoup(kaadoc.render())
+        asoup = BeautifulSoup('[<a href="%s">next</a>]' % next.replace('http://kenchreai.org',''), 'html.parser')
+        tag = soup.find(id='next')
+        tag.append(asoup)
+        return str(soup)
     else:
         return kaadoc.render()
 
