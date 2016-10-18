@@ -77,7 +77,7 @@ def kaasparql(kaapath = 'kaa'):
     else:
         uri = 'http://kenchreai.org/kaa/' + kaapath
 
-    kaaquery =  """SELECT ?p ?o ?plabel ?olabel  WHERE
+    kaaquery =  """SELECT ?p ?o ?plabel ?pcomment ?olabel  WHERE
 { { <%s> ?p ?o .
  MINUS {?s kaaont:location ?o }
  MINUS {?s kaaont:observed ?o }
@@ -85,6 +85,7 @@ def kaasparql(kaapath = 'kaa'):
  MINUS {?s kaaont:kaa-note ?o }
  MINUS {?s ?p <http://www.w3.org/2000/01/rdf-schema#Resource> }
  OPTIONAL  { graph ?g {?p <http://www.w3.org/2000/01/rdf-schema#label> ?plabel . } }
+ OPTIONAL  { graph ?g {?p <http://www.w3.org/2000/01/rdf-schema#comment> ?pcomment . } }
  OPTIONAL  { graph ?g {?o <http://www.w3.org/2000/01/rdf-schema#label> ?olabel . } }
  OPTIONAL  { ?o <http://www.w3.org/2000/01/rdf-schema#label> ?olabel . }
  OPTIONAL  { ?p <http://www.w3.org/2000/01/rdf-schema#label> ?plabel . }
@@ -101,7 +102,7 @@ def kaasparql(kaapath = 'kaa'):
  ?s ?p <%s> }
  OPTIONAL  { ?s <http://www.w3.org/2000/01/rdf-schema#label> ?slabel . }
  OPTIONAL  { ?s <http://xmlns.com/foaf/0.1/name> ?slabel . }
- OPTIONAL { ?s kaaont:file|kaaont:pagescan|kaaont:photograph|kaaont:drawing ?sthumb . FILTER regex(?sthumb, 'png$')  }
+ OPTIONAL { ?s kaaont:file|kaaont:pagescan|kaaont:photograph|kaaont:drawing ?sthumb . FILTER regex(?sthumb, '(jpg|png)$')  }
  } } ORDER BY ?s""" % (uri,uri,uri)
     reasoner.setQuery(physicalquery)
     reasoner.setReturnFormat(JSON)
@@ -113,7 +114,7 @@ def kaasparql(kaapath = 'kaa'):
  UNION  { ?s <http://kenchreai.org/kaa/ontology/same-as> <%s> .  }
  OPTIONAL  { ?s <http://kenchreai.org/kaa/ontology/next> <%s> . ?s ?p <%s> }
  OPTIONAL  { ?s <http://www.w3.org/2000/01/rdf-schema#label> ?slabel . }\
- OPTIONAL { ?s kaaont:file|kaaont:pagescan|kaaont:photograph|kaaont:drawing ?sthumb . FILTER regex(?sthumb, 'png$') } }\
+ OPTIONAL { ?s kaaont:file|kaaont:pagescan|kaaont:photograph|kaaont:drawing ?sthumb . FILTER regex(?sthumb, '(jpg|png)$') } }\
  FILTER (!isBlank(?s))  } ORDER BY ?s""" % (uri,uri,uri,uri)
     reasoner.setQuery(conceptualquery)
     reasoner.setReturnFormat(JSON)
@@ -161,13 +162,19 @@ def kaasparql(kaapath = 'kaa'):
                     span(id="next")
 
                 for row in kaaresult["results"]["bindings"]:
+                    
+                    if 'pcomment' in row.keys():
+                        pcomment = "%s [%s]" % (row["pcomment"]["value"],row["p"]["value"].replace('http://kenchreai.org/kaa/ontology/','kaaont:'))
+                    else:
+                        pcomment = row["p"]["value"].replace('http://kenchreai.org/kaa/ontology/','kaaont:')
+                
                     if row["p"]["value"] == 'http://www.w3.org/2000/01/rdf-schema#label':
                         continue
                     elif row["p"]["value"] == 'http://kenchreai.org/kaa/ontology/next':
                         next = row["o"]["value"]
                         continue
                     elif "plabel" in row.keys():
-                        dt(row["plabel"]["value"], style="white-space: normal")
+                        dt(row["plabel"]["value"], style="white-space: normal", title = pcomment)
                     else:
                         dt(i(row["p"]["value"]), style="white-space: normal")
                 
@@ -179,7 +186,7 @@ def kaasparql(kaapath = 'kaa'):
                             olabel = row["o"]["value"]
                         
                         if re.search('(\.png|\.jpg)$', row["o"]["value"], flags= re.I):
-                            img(style="max-width:250px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % row["o"]["value"])  
+                            img(style="max-width:350px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % row["o"]["value"])  
                         elif re.search('(\.pdf|\.tif|\.tiff)$', row["o"]["value"], flags= re.I):
                             iframe(src="http://docs.google.com/gview?url=http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s&embedded=true" % row["o"]["value"],style="width:600px; height:500px;",frameborder="0")
                         elif row["o"]["value"][0:4] == 'http':
@@ -276,18 +283,17 @@ def fulltextsearch():
                         (?l ?score) <tag:stardog:api:property:textMatch> '%s'.
                         ?s ?p ?l . 
                         ?s rdfs:label ?slabel .
-                        OPTIONAL { ?s kaaont:drawing|kaaont:photograph ?sthumb . }
-                        
+                        OPTIONAL { ?s kaaont:drawing|kaaont:photograph ?sthumb . FILTER regex(?sthumb, '(jpg|png)$') }
                         }""" % (q)
 
         endpoint.setQuery(ftquery)
         endpoint.setReturnFormat(JSON)
         ftresult = endpoint.query().convert()
-    
+
 
     ftdoc = dominate.document(title="Kenchreai Archaeological Archive: Full-Text Search")
     kaaheader(ftdoc, '')
-    
+
     ftdoc.body['prefix'] = "bibo: http://purl.org/ontology/bibo/  cc: http://creativecommons.org/ns#  dcmitype: http://purl.org/dc/dcmitype/  dcterms: http://purl.org/dc/terms/  foaf: http://xmlns.com/foaf/0.1/  nm: http://nomisma.org/id/  owl:  http://www.w3.org/2002/07/owl#  rdfs: http://www.w3.org/2000/01/rdf-schema#   rdfa: http://www.w3.org/ns/rdfa#  rdf:  http://www.w3.org/1999/02/22-rdf-syntax-ns#  skos: http://www.w3.org/2004/02/skos/core#"
     with ftdoc:
         with nav(cls="navbar navbar-default navbar-fixed-top"):
@@ -307,9 +313,9 @@ def fulltextsearch():
                                li(a('"ke 1221"', href="/api/full-text-search?q=%22ke%201221%22"))
                                li(a('fish*', href="/api/full-text-search?q=fish%2A"))
                                li(a('ΔΙΟΝΕΙΚΟΥ', href="/api/full-text-search?q=ΔΙΟΝΕΙΚΟΥ"))
-        
+
         with dl(cls="dl-horizontal"):
-            
+
             dt("Search")
             if qexists == True:
                 dd(q)
@@ -344,14 +350,12 @@ def fulltextsearch():
                                 thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
                             else:
                                 thumb = 'thumbs/' + thumb
-                            
-                            if re.search(r'(.png|.jpg)',thumb, flags= re.I):
-                                img(style="margin-left:1em;margin-bottom:15px;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb)  
-         
+                            img(style="margin-left:1em;margin-bottom:15px;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb)
+
     kaafooter(ftdoc)
-    
+
     return ftdoc.render()
-    
+
 
 @app.route('/api/geojson/<path:kaapath>')
 def geojson_entity(kaapath):
@@ -367,7 +371,6 @@ def geojson_entity(kaapath):
         if len(geojsonr) > 0:
             for row in geojsonr:
                 pass
-                    
 
 @app.route('/')
 def index():
