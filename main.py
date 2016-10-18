@@ -313,6 +313,7 @@ def fulltextsearch():
                                li(a('"ke 1221"', href="/api/full-text-search?q=%22ke%201221%22"))
                                li(a('fish*', href="/api/full-text-search?q=fish%2A"))
                                li(a('ΔΙΟΝΕΙΚΟΥ', href="/api/full-text-search?q=ΔΙΟΝΕΙΚΟΥ"))
+                               li(a('"Asia Minor"', href="/api/full-text-search?q==%22Asia%20Minor%22"))
 
         with dl(cls="dl-horizontal"):
 
