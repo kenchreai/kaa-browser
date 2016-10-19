@@ -196,13 +196,13 @@ def kaasparql(kaapath = 'kaa'):
                                     
                           
                 if len(physicalresult["results"]["bindings"]) > 0:
-                    dt('Has physical parts')
+                    dt('Has physical parts', style="margin-top:1em", title="A list of resources that are best understood as being a physical part of this resource. Includes such relationships as Excavation Trench within an Area or Notebook page in a notebook."  )
                     curlabel = ''
                     first = 0
                     # compile all URIs into a single dd element
                     # issue: i'd like to be able to indicate how many resources are parts. It's not 
                     # len(physical["results"]["bindings"]) as that repeats ?s
-                    with dd():
+                    with dd(style="margin-top:1em"):
                         for row in physicalresult["results"]["bindings"]:
                             if "slabel" in row.keys():
                                 label = row["slabel"]["value"]
@@ -226,13 +226,13 @@ def kaasparql(kaapath = 'kaa'):
 
 
                 if len(conceptualresult["results"]["bindings"]) > 0:
-                    dt('Linked to')
+                    dt('Linked to', style="margin-top:1em", title = "A list of resource that link back to the current resource. Used to display such relationships as Excavation Notebooks being documentation of Areas, Typological Identification of a particular object, Narrower terms in the archaeological typology, or assocaition with a Chronological period or modern year.")
                     curlabel = ''
                     first = 0
                     # compile all URIs into a single dd element
                     # issue: i'd like to be able to indicate how many resources are linked to. It's not 
                     # len(conceptualresult["results"]["bindings"]) as that repeats ?s
-                    with dd():
+                    with dd(style="margin-top:1em"):
                         for row in conceptualresult["results"]["bindings"]:
                             if 'slabel' in row.keys():
                                 label = row["slabel"]["value"]
