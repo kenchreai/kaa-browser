@@ -153,8 +153,8 @@ def kaasparql(kaapath = 'kaa'):
             # declare the next variable
             next = None
             with dl(cls="dl-horizontal"):
-                dt(" ")
-                with dd(cls="large", __pretty=False):
+                dt(" ", style="margin-bottom: .5em; margin-top: 1em")
+                with dd(cls="large", style="margin-bottom: .5em; margin-top: 1em", __pretty=False):
                     strong(label)
                     span(' [')
                     a('permalink', href=uri)
@@ -196,7 +196,7 @@ def kaasparql(kaapath = 'kaa'):
                                     
                           
                 if len(physicalresult["results"]["bindings"]) > 0:
-                    dt('Has physical parts', style="margin-top:1em", title="A list of resources that are best understood as being a physical part of this resource. Includes such relationships as Excavation Trench within an Area or Notebook page in a notebook."  )
+                    dt('Has physical parts', style="margin-top:.75em", title="A list of resources that are best understood as being a physical part of this resource. Includes such relationships as Excavation Trench within an Area or Notebook page in a notebook."  )
                     curlabel = ''
                     first = 0
                     # compile all URIs into a single dd element
@@ -226,7 +226,7 @@ def kaasparql(kaapath = 'kaa'):
 
 
                 if len(conceptualresult["results"]["bindings"]) > 0:
-                    dt('Linked to', style="margin-top:1em", title = "A list of resource that link back to the current resource. Used to display such relationships as Excavation Notebooks being documentation of Areas, Typological Identification of a particular object, Narrower terms in the archaeological typology, or assocaition with a Chronological period or modern year.")
+                    dt('Linked to', style="margin-top:.75em", title = "A list of resource that link back to the current resource. Used to display such relationships as Excavation Notebooks being documentation of Areas, Typological Identification of a particular object, Narrower terms in the archaeological typology, or assocaition with a Chronological period or modern year.")
                     curlabel = ''
                     first = 0
                     # compile all URIs into a single dd element
