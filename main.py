@@ -16,9 +16,10 @@ from flask import redirect, url_for, after_this_request
 
 from SPARQLWrapper import SPARQLWrapper, JSON
 
-
-
 import rdflib
+
+# SPARQL PREFIXES
+# BUT THESE ARE NO LONGER USED WITH SPARQLWrapper so here for historical reasons only
 
 ns = {"dcterms" : "http://purl.org/dc/terms/" ,
       "owl"     : "http://www.w3.org/2002/07/owl#" ,
@@ -33,10 +34,7 @@ ns = {"dcterms" : "http://purl.org/dc/terms/" ,
 
 app = Flask(__name__)
 
-# g = rdflib.Graph()
-
-# result = [] # g.parse("p-lod.nt", format="nt")
-
+# 'endpoint' does not have reasoning enabled. 'reasoner' does.
 endpoint = SPARQLWrapper("http://kenchreai.org/endpoint/kenchreai/query")
 reasoner = SPARQLWrapper("http://kenchreai.org/reasoner/kenchreai/query")
 
@@ -77,7 +75,8 @@ def kaasparql(kaapath = 'kaa'):
     else:
         uri = 'http://kenchreai.org/kaa/' + kaapath
 
-    kaaquery =  """SELECT ?p ?o ?plabel ?pcomment ?olabel  WHERE
+    # this query goes to the non-reasoning endpoint
+    kaaquery = """SELECT ?p ?o ?plabel ?pcomment ?olabel  WHERE
 { { <%s> ?p ?o .
  MINUS {?s kaaont:location ?o }
  MINUS {?s kaaont:observed ?o }
@@ -90,12 +89,14 @@ def kaasparql(kaapath = 'kaa'):
  OPTIONAL  { ?o <http://www.w3.org/2000/01/rdf-schema#label> ?olabel . }
  OPTIONAL  { ?p <http://www.w3.org/2000/01/rdf-schema#label> ?plabel . }
   }\
- UNION { <%s> kaaont:observed ?s . ?s ?p ?o . } } ORDER BY ?s ?plabel""" % (uri,uri)
+ UNION { <%s> kaaont:observed ?s . ?s ?p ?o . } } ORDER BY ?p ?plabel ?olabel ?o""" % (uri,uri)
            
     endpoint.setQuery(kaaquery)
     endpoint.setReturnFormat(JSON)
     kaaresult = endpoint.query().convert()
 
+
+    # This query should be passed to reasoner
     physicalquery = """SELECT  ?s ?p ?slabel ?sthumb WHERE
  { { <%s> <http://kenchreai.org/kaa/ontology/has-physical-part> ?s .
   OPTIONAL  { ?s <http://kenchreai.org/kaa/ontology/next> <%s> .
@@ -108,14 +109,14 @@ def kaasparql(kaapath = 'kaa'):
     reasoner.setReturnFormat(JSON)
     physicalresult = reasoner.query().convert()
 
-
+    # This query should be passed to reasoner
     conceptualquery = """SELECT  ?s ?p ?slabel ?sthumb WHERE
  { {  { <%s> <http://kenchreai.org/kaa/ontology/has-logical-part> ?s . }
  UNION  { ?s <http://kenchreai.org/kaa/ontology/same-as> <%s> .  }
  OPTIONAL  { ?s <http://kenchreai.org/kaa/ontology/next> <%s> . ?s ?p <%s> }
  OPTIONAL  { ?s <http://www.w3.org/2000/01/rdf-schema#label> ?slabel . }\
  OPTIONAL { ?s kaaont:file|kaaont:pagescan|kaaont:photograph|kaaont:drawing ?sthumb . FILTER regex(?sthumb, '(jpg|png)$') } }\
- FILTER (!isBlank(?s))  } ORDER BY ?s""" % (uri,uri,uri,uri)
+ FILTER (!isBlank(?s))  } ORDER BY ?s ?slabel""" % (uri,uri,uri,uri)
     reasoner.setQuery(conceptualquery)
     reasoner.setReturnFormat(JSON)
     conceptualresult = reasoner.query().convert()
@@ -199,7 +200,7 @@ def kaasparql(kaapath = 'kaa'):
                     dt('Has physical parts', style="margin-top:.75em", title="A list of resources that are best understood as being a physical part of this resource. Includes such relationships as Excavation Trench within an Area or Notebook page in a notebook."  )
                     curlabel = ''
                     first = 0
-                    # compile all URIs into a single dd element
+                    # compile all URIs for "physically part of" resources into a single dd element
                     # issue: i'd like to be able to indicate how many resources are parts. It's not 
                     # len(physical["results"]["bindings"]) as that repeats ?s
                     with dd(style="margin-top:1em"):
@@ -229,7 +230,7 @@ def kaasparql(kaapath = 'kaa'):
                     dt('Linked to', style="margin-top:.75em", title = "A list of resource that link back to the current resource. Used to display such relationships as Excavation Notebooks being documentation of Areas, Typological Identification of a particular object, Narrower terms in the archaeological typology, or assocaition with a Chronological period or modern year.")
                     curlabel = ''
                     first = 0
-                    # compile all URIs into a single dd element
+                    # compile all URIs for "logically part of" resources into a single dd element
                     # issue: i'd like to be able to indicate how many resources are linked to. It's not 
                     # len(conceptualresult["results"]["bindings"]) as that repeats ?s
                     with dd(style="margin-top:1em"):
@@ -284,7 +285,7 @@ def fulltextsearch():
                         ?s ?p ?l . 
                         ?s rdfs:label ?slabel .
                         OPTIONAL { ?s kaaont:drawing|kaaont:photograph ?sthumb . FILTER regex(?sthumb, '(jpg|png)$') }
-                        }""" % (q)
+                        } ORDER BY ?s ?slabel""" % (q)
 
         endpoint.setQuery(ftquery)
         endpoint.setReturnFormat(JSON)
