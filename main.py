@@ -280,7 +280,7 @@ def fulltextsearch():
     if qexists == True:
         ftquery = """SELECT DISTINCT ?s ?slabel ?sthumb
                         WHERE {
-                        (?l ?score) <tag:stardog:api:property:textMatch> '%s'.
+                        (?l ?score) <tag:stardog:api:property:textMatch> ( '%s' 2000).
                         ?s ?p ?l . 
                         ?s rdfs:label ?slabel .
                         OPTIONAL { ?s kaaont:drawing|kaaont:photograph ?sthumb . FILTER regex(?sthumb, '(jpg|png)$') }
