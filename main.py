@@ -187,7 +187,7 @@ def kaasparql(kaapath = 'kaa'):
                             olabel = row["o"]["value"]
                         
                         if re.search('(\.png|\.jpg)$', row["o"]["value"], flags= re.I):
-                            img(style="max-width:350px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % row["o"]["value"])  
+                            a(img(style="max-width:350px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % row["o"]["value"]), href="/api/display-image-file?q=%s" % row["o"]["value"])
                         elif re.search('(\.pdf|\.tif|\.tiff)$', row["o"]["value"], flags= re.I):
                             iframe(src="http://docs.google.com/gview?url=http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s&embedded=true" % row["o"]["value"],style="width:600px; height:500px;",frameborder="0")
                         elif row["o"]["value"][0:4] == 'http':
@@ -358,6 +358,78 @@ def fulltextsearch():
 
     return ftdoc.render()
 
+
+@app.route('/api/display-image-file')
+def display_image_file():
+
+    q = request.args.get('q')
+    
+    if q != '' and q is not None:
+        qexists = True
+    else:
+        qexists = False
+
+    if qexists == True:
+
+        imgquery = """SELECT ?s ?slabel ?file
+               WHERE {
+                   ?s ?p '%s' .
+                   ?s rdfs:label ?slabel .
+                   BIND ("%s" as ?file) 
+               }""" % (q,q)
+
+        endpoint.setQuery(imgquery)
+        endpoint.setReturnFormat(JSON)
+        imgresult = endpoint.query().convert()
+
+        imgdoc = dominate.document(title="Kenchreai Archaeological Archive: Image")
+        kaaheader(imgdoc, '')
+
+        imgdoc.body['prefix'] = "bibo: http://purl.org/ontology/bibo/  cc: http://creativecommons.org/ns#  dcmitype: http://purl.org/dc/dcmitype/  dcterms: http://purl.org/dc/terms/  foaf: http://xmlns.com/foaf/0.1/  nm: http://nomisma.org/id/  owl:  http://www.w3.org/2002/07/owl#  rdfs: http://www.w3.org/2000/01/rdf-schema#   rdfa: http://www.w3.org/ns/rdfa#  rdf:  http://www.w3.org/1999/02/22-rdf-syntax-ns#  skos: http://www.w3.org/2004/02/skos/core#"
+        with imgdoc:
+            with nav(cls="navbar navbar-default navbar-fixed-top"):
+               with div(cls="container-fluid"):
+                   with div(cls="navbar-header"):
+                       a("KAA: Image" , href="/kaa",cls="navbar-brand")
+                       with form(cls="navbar-form navbar-left", role="search"):
+                           with div(cls="form-group"):
+                               input(id="q", name="q", type="text",cls="form-control",placeholder="Search...")
+                       with ul(cls="nav navbar-nav"):
+                           with li(cls="dropdown"):
+                               a("Example Searches", href="#",cls="dropdown-toggle", data_toggle="dropdown")
+                               with ul(cls="dropdown-menu", role="menu"):
+                                   li(a('+ke +1221', href="/api/full-text-search?q=%2Bke%20%2B1221"))
+                                   li(a('+corinthian +lamp', href="/api/full-text-search?q=%2Bcorinthian%20%2Blamp"))
+                                   li(a('+gold -ring', href="/api/full-text-search?q=%2Bgold%20%2Dring"))
+                                   li(a('"ke 1221"', href="/api/full-text-search?q=%22ke%201221%22"))
+                                   li(a('fish*', href="/api/full-text-search?q=fish%2A"))
+                                   li(a('ΔΙΟΝΕΙΚΟΥ', href="/api/full-text-search?q=ΔΙΟΝΕΙΚΟΥ"))
+                                   li(a('"Asia Minor"', href="/api/full-text-search?q=%22Asia%20Minor%22"))
+
+            with dl(cls="dl-horizontal"):
+
+                if len(imgresult["results"]["bindings"]) > 0:
+
+                    dt("Depicts")
+                    with dd():
+                        for row in imgresult["results"]["bindings"]:
+                            if 'slabel' in row.keys():
+                                p(a(row["slabel"]["value"],href=row["s"]["value"].replace("http://kenchreai.org","")))
+                            else:
+                                p(row["s"]["value"])
+                            imgsrc = row["file"]["value"]
+
+                    dt('')
+                    
+                    dd(img(src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % imgsrc , style="width:100%"))
+                    
+                else:
+                    dt('')
+                    dt('No image available')
+
+    kaafooter(imgdoc)
+
+    return imgdoc.render()
 
 @app.route('/api/geojson/<path:kaapath>')
 def geojson_entity(kaapath):
