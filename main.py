@@ -1,5 +1,6 @@
 import os
 import re
+import urllib.parse
 import urllib.request
 import html
 
@@ -371,12 +372,14 @@ def display_image_file():
 
     if qexists == True:
 
+        q = q.replace(' ','%20')
+
         imgquery = """SELECT ?s ?slabel ?file
                WHERE {
                    ?s ?p '%s' .
                    ?s rdfs:label ?slabel .
                    BIND ("%s" as ?file) 
-               }""" % (q,q)
+               }""" % (urllib.parse.quote(q),urllib.parse.quote(q))
 
         endpoint.setQuery(imgquery)
         endpoint.setReturnFormat(JSON)
@@ -387,6 +390,8 @@ def display_image_file():
 
         imgdoc.body['prefix'] = "bibo: http://purl.org/ontology/bibo/  cc: http://creativecommons.org/ns#  dcmitype: http://purl.org/dc/dcmitype/  dcterms: http://purl.org/dc/terms/  foaf: http://xmlns.com/foaf/0.1/  nm: http://nomisma.org/id/  owl:  http://www.w3.org/2002/07/owl#  rdfs: http://www.w3.org/2000/01/rdf-schema#   rdfa: http://www.w3.org/ns/rdfa#  rdf:  http://www.w3.org/1999/02/22-rdf-syntax-ns#  skos: http://www.w3.org/2004/02/skos/core#"
         with imgdoc:
+            comment(q)
+            comment(imgquery)
             with nav(cls="navbar navbar-default navbar-fixed-top"):
                with div(cls="container-fluid"):
                    with div(cls="navbar-header"):
@@ -419,17 +424,24 @@ def display_image_file():
                                 p(row["s"]["value"])
                             imgsrc = row["file"]["value"]
 
+                   #show the image itself
                     dt('')
-                    
                     dd(img(src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % imgsrc , style="width:100%"))
                     
+                    # show the file name
+                    dt('Filename', style="color:gray")
+                    dd(imgsrc, style="color:gray")
+                    
                 else:
-                    dt('')
-                    dt('No image available')
+                    dt('Result')
+                    dd('No image available for "%s"' % q)
 
-    kaafooter(imgdoc)
+        kaafooter(imgdoc)
 
-    return imgdoc.render()
+        return imgdoc.render()
+    
+    else:
+        return "Invalid query"
 
 @app.route('/api/geojson/<path:kaapath>')
 def geojson_entity(kaapath):
