@@ -104,7 +104,7 @@ def kaasparql(kaapath = 'kaa'):
  OPTIONAL  { ?s <http://www.w3.org/2000/01/rdf-schema#label> ?slabel . }
  OPTIONAL  { ?s <http://xmlns.com/foaf/0.1/name> ?slabel . }
  OPTIONAL { ?s kaaont:file|kaaont:pagescan|kaaont:photograph|kaaont:drawing ?sthumb . FILTER regex(?sthumb, '(jpg|png)$')  }
- } } ORDER BY ?s""" % (uri,uri,uri)
+ } } ORDER BY ?s ?slabel""" % (uri,uri,uri)
     reasoner.setQuery(physicalquery)
     reasoner.setReturnFormat(JSON)
     physicalresult = reasoner.query().convert()
@@ -223,7 +223,7 @@ def kaasparql(kaapath = 'kaa'):
                             if 'sthumb' in row.keys():
                                 thumb = row["sthumb"]["value"]
                                 thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
-                                img(style="margin-left:1em;margin-bottom:15px;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb)  
+                                a(img(style="margin-left:1em;margin-bottom:15px;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb), href = row["s"]["value"].replace('http://kenchreai.org',''))
 
 
                 if len(conceptualresult["results"]["bindings"]) > 0:
@@ -256,7 +256,7 @@ def kaasparql(kaapath = 'kaa'):
                                     thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
                                 else:
                                     thumb = 'thumbs/' + thumb
-                                img(style="margin-left:1em;margin-bottom:15px;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb)  
+                                a(img(style="margin-left:1em;margin-bottom:15px;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb), href = row["s"]["value"].replace('http://kenchreai.org',''))
                                 
     kaafooter(kaadoc, kaapath, True)
     
@@ -373,12 +373,12 @@ def display_image_file():
 
         # q = q.replace(' ','%20')
 
-        imgquery = """SELECT ?s ?slabel ?file
+        imgquery = """SELECT ?s ?slabel ?file ?p
                WHERE {
                    ?s ?p '%s' .
                    ?s rdfs:label ?slabel .
                    BIND ("%s" as ?file) 
-               }""" % (q,q)
+               } ORDER BY ?s ?slabel ?p""" % (q,q)
 
         endpoint.setQuery(imgquery)
         endpoint.setReturnFormat(JSON)
