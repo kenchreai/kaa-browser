@@ -2,7 +2,6 @@ import os
 import re
 import urllib.parse
 import urllib.request
-import html
 
 import dominate
 
@@ -281,12 +280,12 @@ def fulltextsearch():
 
     if qexists == True:
         ftquery = """SELECT DISTINCT ?s ?slabel ?sthumb
-                        WHERE {
-                        (?l ?score) <tag:stardog:api:property:textMatch> ( '%s' 2000).
-                        ?s ?p ?l . 
-                        ?s rdfs:label ?slabel .
-                        OPTIONAL { ?s kaaont:drawing|kaaont:photograph ?sthumb . FILTER regex(?sthumb, '(jpg|png)$') }
-                        } ORDER BY ?s ?slabel""" % (q)
+                    WHERE {
+                    (?l ?score) <tag:stardog:api:property:textMatch> ( '%s' 2000).
+                    ?s ?p ?l . 
+                    ?s rdfs:label ?slabel .
+                    OPTIONAL { ?s kaaont:drawing|kaaont:photograph ?sthumb . FILTER regex(?sthumb, '(jpg|png)$') }
+                    } ORDER BY ?s ?slabel""" % (q)
 
         endpoint.setQuery(ftquery)
         endpoint.setReturnFormat(JSON)
@@ -372,14 +371,14 @@ def display_image_file():
 
     if qexists == True:
 
-        q = q.replace(' ','%20')
+        # q = q.replace(' ','%20')
 
         imgquery = """SELECT ?s ?slabel ?file
                WHERE {
                    ?s ?p '%s' .
                    ?s rdfs:label ?slabel .
                    BIND ("%s" as ?file) 
-               }""" % (urllib.parse.quote(q),urllib.parse.quote(q))
+               }""" % (q,q)
 
         endpoint.setQuery(imgquery)
         endpoint.setReturnFormat(JSON)
@@ -415,7 +414,7 @@ def display_image_file():
 
                 if len(imgresult["results"]["bindings"]) > 0:
 
-                    dt("Depicts")
+                    dt("Image of")
                     with dd():
                         for row in imgresult["results"]["bindings"]:
                             if 'slabel' in row.keys():
