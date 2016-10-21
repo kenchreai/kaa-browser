@@ -395,7 +395,7 @@ def display_image_file():
                with div(cls="container-fluid"):
                    with div(cls="navbar-header"):
                        a("KAA: Image" , href="/kaa",cls="navbar-brand")
-                       with form(cls="navbar-form navbar-left", role="search"):
+                       with form(cls="navbar-form navbar-left", role="search", action="/api/full-text-search"):
                            with div(cls="form-group"):
                                input(id="q", name="q", type="text",cls="form-control",placeholder="Search...")
                        with ul(cls="nav navbar-nav"):
