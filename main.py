@@ -187,7 +187,7 @@ def kaasparql(kaapath = 'kaa'):
                             olabel = row["o"]["value"]
                         
                         if re.search('(\.png|\.jpg)$', row["o"]["value"], flags= re.I):
-                            a(img(style="max-width:350px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % row["o"]["value"]), href="/api/display-image-file?q=%s" % row["o"]["value"])
+                            a(img(style="max-width:600px;max-height:350px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % row["o"]["value"]), href="/api/display-image-file?q=%s" % row["o"]["value"])
                         elif re.search('(\.pdf|\.tif|\.tiff)$', row["o"]["value"], flags= re.I):
                             iframe(src="http://docs.google.com/gview?url=http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s&embedded=true" % row["o"]["value"],style="width:600px; height:500px;",frameborder="0")
                         elif row["o"]["value"][0:4] == 'http':
