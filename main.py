@@ -352,7 +352,7 @@ def fulltextsearch():
                                 thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
                             else:
                                 thumb = 'thumbs/' + thumb
-                            img(style="margin-left:1em;margin-bottom:15px;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb)
+                            a(img(style="margin-left:1em;margin-bottom:15px;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb),href=row["s"]["value"].replace('http://kenchreai.org',''))
 
     kaafooter(ftdoc)
 
