@@ -144,7 +144,7 @@ def kaasparql(kaapath = 'kaa'):
         with nav(cls="navbar navbar-default navbar-fixed-top"):
            with div(cls="container-fluid"):
                with div(cls="navbar-header"):
-                   a("Kenchreai Archaeological Archive", href="/kaa",cls="navbar-brand")
+                   a("Kenchreailkjlkjlkj Archaeological Archive", href="/kaa",cls="navbar-brand")
                    with form(cls="navbar-form navbar-right", role="search", action="/api/full-text-search"):
                        with div(cls="form-group"):
                            input(id="q", name="q", type="text",cls="form-control",placeholder="Search...")
