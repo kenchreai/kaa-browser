@@ -130,7 +130,7 @@ def kaasparql(kaapath = 'kaa'):
     
     # This query should be passed to reasoner
     if deep == True:
-        deepquery = """SELECT ?o ?olabel ?othumb ?otype WHERE {
+        deepquery = """SELECT DISTINCT ?o ?olabel ?othumb ?otype WHERE {
   <%s> ^kaaont:is-part-of+ ?o .
   ?o rdfs:label ?olabel .
   ?o rdf:type ?otype
