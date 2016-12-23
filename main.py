@@ -130,13 +130,13 @@ def kaasparql(kaapath = 'kaa'):
     
     # This query should be passed to reasoner
     if deep == True:
-        deepquery = """SELECT DISTINCT ?o ?olabel ?othumb ?otype WHERE {
+        deepquery = """SELECT DISTINCT ?o ?olabel ?othumb WHERE {
   <%s> ^kaaont:is-part-of+ ?o .
   ?o rdfs:label ?olabel .
   ?o rdf:type ?otype
    OPTIONAL { ?o kaaont:file|kaaont:pagescan|kaaont:photograph|kaaont:drawing ?othumb . FILTER regex(?othumb, '(jpg|png)$') } 
    FILTER isIRI(?o)
-   } ORDER BY ?otype ?o LIMIT 5000""" % (uri)
+   } ORDER BY ?o LIMIT 5000""" % (uri)
         reasoner.setQuery(deepquery)
         reasoner.setReturnFormat(JSON)
         deepresult = reasoner.query().convert()
