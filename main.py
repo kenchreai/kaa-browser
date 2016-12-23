@@ -70,6 +70,13 @@ def kaafooter(doc, kaapath = '', editorLink = False ):
 @app.route('/kaa')
 def kaasparql(kaapath = 'kaa'):
 
+    deep = request.args.get('deep')
+
+    if deep == 'true':
+        deep = True
+    else:
+        deep = False
+
     if kaapath == 'kaa':
         uri = 'http://kenchreai.org/kaa'
     else:
@@ -95,32 +102,45 @@ def kaasparql(kaapath = 'kaa'):
     endpoint.setReturnFormat(JSON)
     kaaresult = endpoint.query().convert()
 
+    if deep == False:
+        # This query should be passed to reasoner
+        physicalquery = """SELECT  ?s ?p ?slabel ?sthumb WHERE
+     { { <%s> <http://kenchreai.org/kaa/ontology/has-physical-part> ?s .
+      OPTIONAL  { ?s <http://kenchreai.org/kaa/ontology/next> <%s> .
+     ?s ?p <%s> }
+     OPTIONAL  { ?s <http://www.w3.org/2000/01/rdf-schema#label> ?slabel . }
+     OPTIONAL  { ?s <http://xmlns.com/foaf/0.1/name> ?slabel . }
+     OPTIONAL { ?s kaaont:file|kaaont:pagescan|kaaont:photograph|kaaont:drawing ?sthumb . FILTER regex(?sthumb, '(jpg|png)$')  }
+     } } ORDER BY ?s ?slabel""" % (uri,uri,uri)
+        reasoner.setQuery(physicalquery)
+        reasoner.setReturnFormat(JSON)
+        physicalresult = reasoner.query().convert()
 
-    # This query should be passed to reasoner
-    physicalquery = """SELECT  ?s ?p ?slabel ?sthumb WHERE
- { { <%s> <http://kenchreai.org/kaa/ontology/has-physical-part> ?s .
-  OPTIONAL  { ?s <http://kenchreai.org/kaa/ontology/next> <%s> .
- ?s ?p <%s> }
- OPTIONAL  { ?s <http://www.w3.org/2000/01/rdf-schema#label> ?slabel . }
- OPTIONAL  { ?s <http://xmlns.com/foaf/0.1/name> ?slabel . }
- OPTIONAL { ?s kaaont:file|kaaont:pagescan|kaaont:photograph|kaaont:drawing ?sthumb . FILTER regex(?sthumb, '(jpg|png)$')  }
- } } ORDER BY ?s ?slabel""" % (uri,uri,uri)
-    reasoner.setQuery(physicalquery)
-    reasoner.setReturnFormat(JSON)
-    physicalresult = reasoner.query().convert()
-
-    # This query should be passed to reasoner
-    conceptualquery = """SELECT  ?s ?p ?slabel ?sthumb WHERE
- { {  { <%s> <http://kenchreai.org/kaa/ontology/has-logical-part> ?s . }
- UNION  { ?s <http://kenchreai.org/kaa/ontology/same-as> <%s> .  }
- OPTIONAL  { ?s <http://kenchreai.org/kaa/ontology/next> <%s> . ?s ?p <%s> }
- OPTIONAL  { ?s <http://www.w3.org/2000/01/rdf-schema#label> ?slabel . }\
- OPTIONAL { ?s kaaont:file|kaaont:pagescan|kaaont:photograph|kaaont:drawing ?sthumb . FILTER regex(?sthumb, '(jpg|png)$') } }\
- FILTER (!isBlank(?s))  } ORDER BY ?s ?slabel""" % (uri,uri,uri,uri)
-    reasoner.setQuery(conceptualquery)
-    reasoner.setReturnFormat(JSON)
-    conceptualresult = reasoner.query().convert()
+        # This query should be passed to reasoner
+        conceptualquery = """SELECT  ?s ?p ?slabel ?sthumb WHERE
+     { {  { <%s> <http://kenchreai.org/kaa/ontology/has-logical-part> ?s . }
+     UNION  { ?s <http://kenchreai.org/kaa/ontology/same-as> <%s> .  }
+     OPTIONAL  { ?s <http://kenchreai.org/kaa/ontology/next> <%s> . ?s ?p <%s> }
+     OPTIONAL  { ?s <http://www.w3.org/2000/01/rdf-schema#label> ?slabel . }\
+     OPTIONAL { ?s kaaont:file|kaaont:pagescan|kaaont:photograph|kaaont:drawing ?sthumb . FILTER regex(?sthumb, '(jpg|png)$') } }
+     FILTER (!isBlank(?s))  } ORDER BY ?s ?slabel""" % (uri,uri,uri,uri)
+        reasoner.setQuery(conceptualquery)
+        reasoner.setReturnFormat(JSON)
+        conceptualresult = reasoner.query().convert()
     
+    # This query should be passed to reasoner
+    if deep == True:
+        deepquery = """SELECT ?o ?olabel ?othumb ?otype WHERE {
+  <%s> ^kaaont:is-part-of+ ?o .
+  ?o rdfs:label ?olabel .
+  ?o rdf:type ?otype
+   OPTIONAL { ?o kaaont:file|kaaont:pagescan|kaaont:photograph|kaaont:drawing ?othumb . FILTER regex(?othumb, '(jpg|png)$') } 
+   FILTER isIRI(?o)
+   } ORDER BY ?otype ?o LIMIT 5000""" % (uri)
+        reasoner.setQuery(deepquery)
+        reasoner.setReturnFormat(JSON)
+        deepresult = reasoner.query().convert()
+
 
     kaalabel = """SELECT ?slabel 
            WHERE {
@@ -161,6 +181,15 @@ def kaasparql(kaapath = 'kaa'):
                     a('permalink', href=uri)
                     span('] ')
                     span(id="next")
+                    if deep == False:
+                        span(' [')
+                        a('show more links', href='/kaa/'+kaapath+'?deep=true',title='Clicking here will cause the database to search for linked resources more aggresively. Can take a long time!')
+                        span('] ')
+                    else:
+                        span(' [')
+                        a('show fewer links', href='/kaa/'+kaapath,title='Clicking here will cause the database to show only directly lined resources')
+                        span('] ')
+
 
                 for row in kaaresult["results"]["bindings"]:
                     
@@ -194,69 +223,97 @@ def kaasparql(kaapath = 'kaa'):
                             a(olabel,href = row["o"]["value"].replace('http://kenchreai.org',''))
                         else:
                             span(olabel)
-                                    
-                          
-                if len(physicalresult["results"]["bindings"]) > 0:
-                    dt('Has physical parts', style="margin-top:.75em", title="A list of resources that are best understood as being a physical part of this resource. Includes such relationships as Excavation Trench within an Area or Notebook page in a notebook."  )
-                    curlabel = ''
-                    first = 0
-                    # compile all URIs for "physically part of" resources into a single dd element
-                    # issue: i'd like to be able to indicate how many resources are parts. It's not 
-                    # len(physical["results"]["bindings"]) as that repeats ?s
-                    with dd(style="margin-top:1em"):
-                        for row in physicalresult["results"]["bindings"]:
-                            if "slabel" in row.keys():
-                                label = row["slabel"]["value"]
-                            else:
-                                label = re.sub('http://kenchreai.org/kaa/','kaa:',row["s"]["value"])
+                
+                if deep == True:
+                    if len(deepresult["results"]["bindings"]) > 0:
+                        dt('Linked to', style="margin-top:.75em", title="All linked resources"  )
+                        curlabel = ''
+                        first = 0
+                        with dd(style="margin-top:1em"):
+                            for row in deepresult["results"]["bindings"]:
+                                if "olabel" in row.keys():
+                                    label = row["olabel"]["value"]
+                                else:
+                                    label = re.sub('http://kenchreai.org/kaa/','kaa:',row["o"]["value"])
                             
-                            if curlabel != label:
-                                curlabel = label
-                                if first == 1:
-                                    first = 0
-                                    pstyle = ''
-                                else:
-                                    pstyle = 'border-top: thin dotted #aaa'   
+                                if curlabel != label:
+                                    curlabel = label
+                                    if first == 1:
+                                        first = 0
+                                        pstyle = ''
+                                    else:
+                                        pstyle = 'border-top: thin dotted #aaa'   
                                                             
-                                p(a(label, style=pstyle, rel="dcterms:hasPart", href = row["s"]["value"].replace('http://kenchreai.org','')))
+                                    p(a(label, style=pstyle, rel="dcterms:hasPart", href = row["o"]["value"].replace('http://kenchreai.org','')))
       
-                            if 'sthumb' in row.keys():
-                                thumb = row["sthumb"]["value"]
-                                thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
-                                a(img(style="margin-left:1em;margin-bottom:15px;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb), href = row["s"]["value"].replace('http://kenchreai.org',''))
-
-
-                if len(conceptualresult["results"]["bindings"]) > 0:
-                    dt('Linked to', style="margin-top:.75em", title = "A list of resource that link back to the current resource. Used to display such relationships as Excavation Notebooks being documentation of Areas, Typological Identification of a particular object, Narrower terms in the archaeological typology, or assocaition with a Chronological period or modern year.")
-                    curlabel = ''
-                    first = 0
-                    # compile all URIs for "logically part of" resources into a single dd element
-                    # issue: i'd like to be able to indicate how many resources are linked to. It's not 
-                    # len(conceptualresult["results"]["bindings"]) as that repeats ?s
-                    with dd(style="margin-top:1em"):
-                        for row in conceptualresult["results"]["bindings"]:
-                            if 'slabel' in row.keys():
-                                label = row["slabel"]["value"]
-                            else:
-                                label = re.sub('http://kenchreai.org/kaa/','kaa:',row["s"]["value"])
-                                                    
-                            if curlabel != label:
-                                curlabel = label
-                                if first == 1:
-                                    first = 0
-                                    pstyle = ''
-                                else:
-                                    pstyle = 'border-top: thin dotted #aaa;'
-                                    
-                                p(a(label, style=pstyle, rel="dcterms:hasPart", href = row["s"]["value"].replace('http://kenchreai.org','')))
-                                
-                            if 'sthumb' in row.keys():
-                                thumb = row["sthumb"]["value"]
-                                if '/' in thumb:
+                                if 'othumb' in row.keys():
+                                    thumb = row["othumb"]["value"]
                                     thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
+                                    a(img(style="margin-left:1em;margin-bottom:15px;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb), href = row["o"]["value"].replace('http://kenchreai.org',''))
+
+                if deep == False:
+                                    
+                    if len(physicalresult["results"]["bindings"]) > 0:
+                        dt('Has physical parts', style="margin-top:.75em", title="A list of resources that are best understood as being a physical part of this resource. Includes such relationships as Excavation Trench within an Area or Notebook page in a notebook."  )
+                        curlabel = ''
+                        first = 0
+                        # compile all URIs for "physically part of" resources into a single dd element
+                        # issue: i'd like to be able to indicate how many resources are parts. It's not 
+                        # len(physical["results"]["bindings"]) as that repeats ?s
+                        with dd(style="margin-top:1em"):
+                            for row in physicalresult["results"]["bindings"]:
+                                if "slabel" in row.keys():
+                                    label = row["slabel"]["value"]
                                 else:
-                                    thumb = 'thumbs/' + thumb
-                                a(img(style="margin-left:1em;margin-bottom:15px;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb), href = row["s"]["value"].replace('http://kenchreai.org',''))
+                                    label = re.sub('http://kenchreai.org/kaa/','kaa:',row["s"]["value"])
+                            
+                                if curlabel != label:
+                                    curlabel = label
+                                    if first == 1:
+                                        first = 0
+                                        pstyle = ''
+                                    else:
+                                        pstyle = 'border-top: thin dotted #aaa'   
+                                                            
+                                    p(a(label, style=pstyle, rel="dcterms:hasPart", href = row["s"]["value"].replace('http://kenchreai.org','')))
+      
+                                if 'sthumb' in row.keys():
+                                    thumb = row["sthumb"]["value"]
+                                    thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
+                                    a(img(style="margin-left:1em;margin-bottom:15px;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb), href = row["s"]["value"].replace('http://kenchreai.org',''))
+
+
+                    if len(conceptualresult["results"]["bindings"]) > 0:
+                        dt('Linked to', style="margin-top:.75em", title = "A list of resource that link back to the current resource. Used to display such relationships as Excavation Notebooks being documentation of Areas, Typological Identification of a particular object, Narrower terms in the archaeological typology, or assocaition with a Chronological period or modern year.")
+                        curlabel = ''
+                        first = 0
+                        # compile all URIs for "logically part of" resources into a single dd element
+                        # issue: i'd like to be able to indicate how many resources are linked to. It's not 
+                        # len(conceptualresult["results"]["bindings"]) as that repeats ?s
+                        with dd(style="margin-top:1em"):
+                            for row in conceptualresult["results"]["bindings"]:
+                                if 'slabel' in row.keys():
+                                    label = row["slabel"]["value"]
+                                else:
+                                    label = re.sub('http://kenchreai.org/kaa/','kaa:',row["s"]["value"])
+                                                    
+                                if curlabel != label:
+                                    curlabel = label
+                                    if first == 1:
+                                        first = 0
+                                        pstyle = ''
+                                    else:
+                                        pstyle = 'border-top: thin dotted #aaa;'
+                                    
+                                    p(a(label, style=pstyle, rel="dcterms:hasPart", href = row["s"]["value"].replace('http://kenchreai.org','')))
+                                
+                                if 'sthumb' in row.keys():
+                                    thumb = row["sthumb"]["value"]
+                                    if '/' in thumb:
+                                        thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
+                                    else:
+                                        thumb = 'thumbs/' + thumb
+                                    a(img(style="margin-left:1em;margin-bottom:15px;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb), href = row["s"]["value"].replace('http://kenchreai.org',''))
                                 
     kaafooter(kaadoc, kaapath, True)
     
