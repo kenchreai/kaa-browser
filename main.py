@@ -21,6 +21,8 @@ import rdflib
 # SPARQL PREFIXES
 # BUT THESE ARE NO LONGER USED WITH SPARQLWrapper so here for historical reasons only
 
+suppressdeep = ['http://kenchreai.org/kaa','http://kenchreai.org/kaa/eastern-mediterranean', 'http://kenchreai.org/kaa/greece']
+
 ns = {"dcterms" : "http://purl.org/dc/terms/" ,
       "owl"     : "http://www.w3.org/2002/07/owl#" ,
       "rdf"     : "http://www.w3.org/1999/02/22-rdf-syntax-ns#" ,
@@ -136,7 +138,7 @@ def kaasparql(kaapath = 'kaa'):
   ?o rdf:type ?otype
    OPTIONAL { ?o kaaont:file|kaaont:pagescan|kaaont:photograph|kaaont:drawing ?othumb . FILTER regex(?othumb, '(jpg|png)$') } 
    FILTER isIRI(?o)
-   } ORDER BY ?o LIMIT 5000""" % (uri)
+   } ORDER BY ?o LIMIT 4000""" % (uri)
         reasoner.setQuery(deepquery)
         reasoner.setReturnFormat(JSON)
         deepresult = reasoner.query().convert()
@@ -181,11 +183,11 @@ def kaasparql(kaapath = 'kaa'):
                     a('permalink', href=uri)
                     span('] ')
                     span(id="next")
-                    if deep == False:
+                    if (deep == False) and (uri not in suppressdeep):
                         span(' [')
                         a('show more links', href='/kaa/'+kaapath+'?deep=true',title='Clicking here will cause the database to search for linked resources more aggresively. Can take a long time!')
                         span('] ')
-                    else:
+                    if (deep == True):
                         span(' [')
                         a('show fewer links', href='/kaa/'+kaapath,title='Clicking here will cause the database to show only directly lined resources')
                         span('] ')
