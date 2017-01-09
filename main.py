@@ -21,7 +21,10 @@ import rdflib
 # SPARQL PREFIXES
 # BUT THESE ARE NO LONGER USED WITH SPARQLWrapper so here for historical reasons only
 
-suppressdeep = ['http://kenchreai.org/kaa','http://kenchreai.org/kaa/eastern-mediterranean', 'http://kenchreai.org/kaa/greece']
+suppressdeep = ['http://kenchreai.org/kaa',
+                'http://kenchreai.org/kaa/eastern-mediterranean',
+                'http://kenchreai.org/kaa/geographic-entities',
+                'http://kenchreai.org/kaa/greece']
 
 ns = {"dcterms" : "http://purl.org/dc/terms/" ,
       "owl"     : "http://www.w3.org/2002/07/owl#" ,
