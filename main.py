@@ -21,10 +21,10 @@ import rdflib
 # SPARQL PREFIXES
 # BUT THESE ARE NO LONGER USED WITH SPARQLWrapper so here for historical reasons only
 
-suppressdeep = ['http://kenchreai.org/kaa',
-                'http://kenchreai.org/kaa/eastern-mediterranean',
-                'http://kenchreai.org/kaa/geographic-entities',
-                'http://kenchreai.org/kaa/greece']
+suppressmore = ['http://kenchreai.org/kaa' ,
+                'http://kenchreai.org/kaa/eastern-mediterranean' , 
+                'http://kenchreai.org/kaa/geographic-entities' , 
+                'http://kenchreai.org/kaa/greece' ]
 
 ns = {"dcterms" : "http://purl.org/dc/terms/" ,
       "owl"     : "http://www.w3.org/2002/07/owl#" ,
@@ -35,7 +35,7 @@ ns = {"dcterms" : "http://purl.org/dc/terms/" ,
       "kaake"   : "http://kenchreai.org/kaa/ke/" ,
       "kaakth"  : "http://kenchreai.org/kaa/kth/" ,
       "kaaont"  : "http://kenchreai.org/kaa/ontology" ,
-      "kaatyp"  : "http://kenchreai.org/kaa/typology/"}
+      "kaatyp"  : "http://kenchreai.org/kaa/typology/" }
 
 app = Flask(__name__)
 
@@ -75,12 +75,12 @@ def kaafooter(doc, kaapath = '', editorLink = False ):
 @app.route('/kaa')
 def kaasparql(kaapath = 'kaa'):
 
-    deep = request.args.get('deep')
+    more = request.args.get('more')
 
-    if deep == 'true':
-        deep = True
+    if more == 'true':
+        more = True
     else:
-        deep = False
+        more = False
 
     if kaapath == 'kaa':
         uri = 'http://kenchreai.org/kaa'
@@ -107,7 +107,7 @@ def kaasparql(kaapath = 'kaa'):
     endpoint.setReturnFormat(JSON)
     kaaresult = endpoint.query().convert()
 
-    if deep == False:
+    if more == False:
         # This query should be passed to reasoner
         physicalquery = """SELECT  ?s ?p ?slabel ?sthumb WHERE
      { { <%s> <http://kenchreai.org/kaa/ontology/has-physical-part> ?s .
@@ -134,17 +134,17 @@ def kaasparql(kaapath = 'kaa'):
         conceptualresult = reasoner.query().convert()
     
     # This query should be passed to reasoner
-    if deep == True:
-        deepquery = """SELECT DISTINCT ?o ?olabel ?othumb WHERE {
+    if more == True:
+        morequery = """SELECT DISTINCT ?o ?olabel ?othumb WHERE {
   <%s> ^kaaont:is-part-of+ ?o .
   ?o rdfs:label ?olabel .
   ?o rdf:type ?otype
    OPTIONAL { ?o kaaont:file|kaaont:pagescan|kaaont:photograph|kaaont:drawing ?othumb . FILTER regex(?othumb, '(jpg|png)$') } 
    FILTER isIRI(?o)
    } ORDER BY ?o LIMIT 4000""" % (uri)
-        reasoner.setQuery(deepquery)
+        reasoner.setQuery(morequery)
         reasoner.setReturnFormat(JSON)
-        deepresult = reasoner.query().convert()
+        moreresult = reasoner.query().convert()
 
 
     kaalabel = """SELECT ?slabel 
@@ -186,11 +186,11 @@ def kaasparql(kaapath = 'kaa'):
                     a('permalink', href=uri)
                     span('] ')
                     span(id="next")
-                    if (deep == False) and (uri not in suppressdeep):
+                    if (more == False) and (uri not in suppressmore):
                         span(' [')
-                        a('show more links', href='/kaa/'+kaapath+'?deep=true',title='Clicking here will cause the database to search for linked resources more aggresively. Can take a long time!')
+                        a('show more links', href='/kaa/'+kaapath+'?more=true',title='Clicking here will cause the database to search for linked resources more aggresively. Can take a long time!')
                         span('] ')
-                    if (deep == True):
+                    if (more == True):
                         span(' [')
                         a('show fewer links', href='/kaa/'+kaapath,title='Clicking here will cause the database to show only directly lined resources')
                         span('] ')
@@ -229,13 +229,13 @@ def kaasparql(kaapath = 'kaa'):
                         else:
                             span(olabel)
                 
-                if deep == True:
-                    if len(deepresult["results"]["bindings"]) > 0:
+                if more == True:
+                    if len(moreresult["results"]["bindings"]) > 0:
                         dt('Linked to', style="margin-top:.75em", title="All linked resources"  )
                         curlabel = ''
                         first = 0
                         with dd(style="margin-top:1em"):
-                            for row in deepresult["results"]["bindings"]:
+                            for row in moreresult["results"]["bindings"]:
                                 if "olabel" in row.keys():
                                     label = row["olabel"]["value"]
                                 else:
@@ -256,7 +256,7 @@ def kaasparql(kaapath = 'kaa'):
                                     thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
                                     a(img(style="margin-left:1em;margin-bottom:15px;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb), href = row["o"]["value"].replace('http://kenchreai.org',''))
 
-                if deep == False:
+                if more == False:
                                     
                     if len(physicalresult["results"]["bindings"]) > 0:
                         dt('Has physical parts', style="margin-top:.75em", title="A list of resources that are best understood as being a physical part of this resource. Includes such relationships as Excavation Trench within an Area or Notebook page in a notebook."  )
