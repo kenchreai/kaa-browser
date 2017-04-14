@@ -253,7 +253,10 @@ def kaasparql(kaapath = 'kaa'):
       
                                 if 'othumb' in row.keys():
                                     thumb = row["othumb"]["value"]
-                                    thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
+                                    if '/' in thumb:
+                                        thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
+                                    else:
+                                        thumb = 'thumbs/' + thumb
                                     a(img(style="margin-left:1em;margin-bottom:15px;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb), href = row["o"]["value"].replace('http://kenchreai.org',''))
 
                 if more == False:
@@ -284,7 +287,10 @@ def kaasparql(kaapath = 'kaa'):
       
                                 if 'sthumb' in row.keys():
                                     thumb = row["sthumb"]["value"]
-                                    thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
+                                    if '/' in thumb:
+                                        thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
+                                    else:
+                                        thumb = 'thumbs/' + thumb
                                     a(img(style="margin-left:1em;margin-bottom:15px;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb), href = row["s"]["value"].replace('http://kenchreai.org',''))
 
 
