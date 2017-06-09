@@ -68,7 +68,7 @@ def kaafooter(doc, kaapath = '', editorLink = False ):
                     span(" for Turtle (TRIG) formatted source files.")
                 
                     if editorLink:
-                        a("🔗" , href="https://kenchreai-data-editor.herokuapp.com/#/detail/%s" % kaapath)
+                        a("🔗" , href="https://kenchreai-data-editor.herokuapp.com/detail/%s" % kaapath)
                     
                         
 @app.route('/kaa/<path:kaapath>')
@@ -88,7 +88,7 @@ def kaasparql(kaapath = 'kaa'):
         uri = 'http://kenchreai.org/kaa/' + kaapath
 
     # this query goes to the non-reasoning endpoint
-    kaaquery = """SELECT ?p ?o ?plabel ?pcomment ?olabel  WHERE
+    kaaquery = """SELECT ?p ?o ?plabel ?pcomment ?pxorder ?olabel  WHERE
 { { <%s> ?p ?o .
  MINUS {?s kaaont:location ?o }
  MINUS {?s kaaont:observed ?o }
@@ -97,11 +97,12 @@ def kaasparql(kaapath = 'kaa'):
  MINUS {?s ?p <http://www.w3.org/2000/01/rdf-schema#Resource> }
  OPTIONAL  { graph ?g {?p <http://www.w3.org/2000/01/rdf-schema#label> ?plabel . } }
  OPTIONAL  { graph ?g {?p <http://www.w3.org/2000/01/rdf-schema#comment> ?pcomment . } }
+ OPTIONAL  { graph ?g {?p kaaont:x-sort-order ?pxorder . } }
  OPTIONAL  { graph ?g {?o <http://www.w3.org/2000/01/rdf-schema#label> ?olabel . } }
  OPTIONAL  { ?o <http://www.w3.org/2000/01/rdf-schema#label> ?olabel . }
  OPTIONAL  { ?p <http://www.w3.org/2000/01/rdf-schema#label> ?plabel . }
   }\
- UNION { <%s> kaaont:observed ?s . ?s ?p ?o . } } ORDER BY ?p ?plabel ?olabel ?o""" % (uri,uri)
+ UNION { <%s> kaaont:observed ?s . ?s ?p ?o . } } ORDER BY ?pxorder ?p ?plabel ?olabel ?o""" % (uri,uri)
            
     endpoint.setQuery(kaaquery)
     endpoint.setReturnFormat(JSON)
