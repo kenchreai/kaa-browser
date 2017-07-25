@@ -61,7 +61,7 @@ def kaafooter(doc, kaapath = '', editorLink = False ):
         with footer(cls="footer"):
             with div(cls="container"):
                 with p(cls="text-muted"):
-                    span("©2016 The ")
+                    span("©2017 The ")
                     a("American Excavations at Kenchreai", href="http://www.kenchreai.org")
                     span(". Data and images available for non-commercial, personal use only. See ")
                     a("Github", href="https://github.com/kenchreai/kaa-ttl")
@@ -180,7 +180,7 @@ def kaasparql(kaapath = 'kaa'):
             # declare the next variable
             next = None
             with dl(cls="dl-horizontal"):
-                dt(" ", style="margin-bottom: .5em; margin-top: 1em")
+                dt(" ", style="margin-bottom: .5em; margin-top: 1em; white-space: nowrap")
                 with dd(cls="large", style="margin-bottom: .5em; margin-top: 1em", __pretty=False):
                     strong(label)
                     span(' [')
@@ -210,9 +210,9 @@ def kaasparql(kaapath = 'kaa'):
                         next = row["o"]["value"]
                         continue
                     elif "plabel" in row.keys():
-                        dt(row["plabel"]["value"], style="white-space: normal", title = pcomment)
+                        dt(row["plabel"]["value"], style="white-space: nowrap; width:12em", title = pcomment)
                     else:
-                        dt(i(row["p"]["value"]), style="white-space: normal")
+                        dt(i(row["p"]["value"]), style="white-space: normal; width:12em")
                 
                     with dd():
                         rkeys = row.keys()
