@@ -336,7 +336,7 @@ def kaasparql(kaapath = 'kaa'):
                     if kaapath == 'kaa':
                       dd(raw("J.L. Rife and S. Heath (Eds.). (2013-{}). <i>The Kenchreai Archaeological Archive</i>. The American Excavations at Kenchreai. Retrieved from &lt;http://kenchreai.org/kaa&gt;".format(strftime('%Y'))), style="margin-top:.5em")
                     else:
-                        dd(raw("“{}.” In <i>The Kenchreai Archaeological Archive</i>, edited by J.L. Rife and S. Heath. American Excavtions at Kenchreai, 2013-{}. &lt;http://kenchreai.org/{}&gt;".format(pagelabel.rstrip(), strftime('%Y'),kaapath)), style="margin-top:.5em")
+                        dd(raw("“{}.” In <i>The Kenchreai Archaeological Archive</i>, edited by J.L. Rife and S. Heath. American Excavations at Kenchreai, 2013-{}. &lt;http://kenchreai.org/{}&gt;".format(pagelabel.rstrip(), strftime('%Y'),kaapath)), style="margin-top:.5em")
 
     kaafooter(kaadoc, kaapath, True)
     
