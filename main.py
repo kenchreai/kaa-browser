@@ -8,6 +8,7 @@ import dominate
 from bs4 import BeautifulSoup
 
 from dominate.tags import *
+from dominate.util import raw
 
 from flask import Flask
 from flask import render_template
@@ -15,6 +16,8 @@ from flask import request
 from flask import redirect, url_for, after_this_request
 
 from SPARQLWrapper import SPARQLWrapper, JSON
+
+from time import *
 
 import rdflib
 
@@ -156,14 +159,14 @@ def kaasparql(kaapath = 'kaa'):
     endpoint.setReturnFormat(JSON)
     labelresult = endpoint.query().convert()
 
-    label = ''
+    pagelabel = ''
     for result in labelresult["results"]["bindings"]:
-        label = result["slabel"]["value"]
-    if label == '':
-        label = 'kaa:' + kaapath
+        pagelabel = result["slabel"]["value"]
+    if pagelabel == '':
+        pagelabel = 'kaa:' + kaapath
 
-    kaadoc = dominate.document(title="Kenchreai Archaeological Archive: %s" % (label))
-    kaaheader(kaadoc, label)
+    kaadoc = dominate.document(title="Kenchreai Archaeological Archive: %s" % (pagelabel))
+    kaaheader(kaadoc, pagelabel)
     
     kaadoc.body['prefix'] = "bibo: http://purl.org/ontology/bibo/  cc: http://creativecommons.org/ns#  dcmitype: http://purl.org/dc/dcmitype/  dcterms: http://purl.org/dc/terms/  foaf: http://xmlns.com/foaf/0.1/  nm: http://nomisma.org/id/  owl:  http://www.w3.org/2002/07/owl#  rdfs: http://www.w3.org/2000/01/rdf-schema#   rdfa: http://www.w3.org/ns/rdfa#  rdf:  http://www.w3.org/1999/02/22-rdf-syntax-ns#  skos: http://www.w3.org/2004/02/skos/core#"
     with kaadoc:
@@ -182,7 +185,7 @@ def kaasparql(kaapath = 'kaa'):
             with dl(cls="dl-horizontal"):
                 dt(" ", style="margin-bottom: .5em; margin-top: 1em; white-space: nowrap")
                 with dd(cls="large", style="margin-bottom: .5em; margin-top: 1em", __pretty=False):
-                    strong(label)
+                    strong(pagelabel)
                     span(' [')
                     a('permalink', href=uri)
                     span('] ')
@@ -327,6 +330,14 @@ def kaasparql(kaapath = 'kaa'):
                                         thumb = 'thumbs/' + thumb
                                     a(img(style="margin-left:1em;margin-bottom:15px;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb), href = row["s"]["value"].replace('http://kenchreai.org',''))
                                 
+    
+                    dt('Suggested Citation', style="margin-top:.5em")
+                    # dd(raw("The American Excavations at Kenchreai. “{}.” <i>The Kenchreai Archaeological Archive</i>. {}. &lt;http://kenchreai.org/{}&gt;".format(pagelabel, strftime('%d %b. %Y'),kaapath)), style="margin-top:.5em")
+                    if kaapath == 'kaa':
+                      dd(raw("J.L. Rife and S. Heath (Eds.). (2013-{}). <i>The Kenchreai Archaeological Archive</i>. The American Excavations at Kenchreai. Retrieved from &lt;http://kenchreai.org/kaa&gt;".format(strftime('%Y'))), style="margin-top:.5em")
+                    else:
+                        dd(raw("“{}.” In <i>The Kenchreai Archaeological Archive</i>, edited by J.L. Rife and S. Heath. American Excavtions at Kenchreai, 2013-{}. &lt;http://kenchreai.org/{}&gt;".format(pagelabel.rstrip(), strftime('%Y'),kaapath)), style="margin-top:.5em")
+
     kaafooter(kaadoc, kaapath, True)
     
     if next is not None:         
