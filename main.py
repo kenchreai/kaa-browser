@@ -448,7 +448,7 @@ def display_image_file():
         imgquery = """SELECT ?s ?slabel ?file ?p
                WHERE {
                    ?s ?p '%s' .
-                   ?s rdfs:label ?slabel .
+                   OPTIONAL { ?s rdfs:label ?slabel . }
                    BIND ("%s" as ?file) 
                } ORDER BY ?s ?slabel ?p""" % (q,q)
 
