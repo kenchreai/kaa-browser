@@ -1,3 +1,6 @@
+# This code needs more comments, no doubt about that.
+# Distributed "AS IS"
+
 import os
 import re
 import urllib.parse
@@ -21,24 +24,11 @@ from time import *
 
 import rdflib
 
-# SPARQL PREFIXES
-# BUT THESE ARE NO LONGER USED WITH SPARQLWrapper so here for historical reasons only
-
+# Don't show "More links" for these URIs. For the time being...
 suppressmore = ['http://kenchreai.org/kaa' ,
                 'http://kenchreai.org/kaa/eastern-mediterranean' , 
                 'http://kenchreai.org/kaa/geographic-entities' , 
                 'http://kenchreai.org/kaa/greece' ]
-
-ns = {"dcterms" : "http://purl.org/dc/terms/" ,
-      "owl"     : "http://www.w3.org/2002/07/owl#" ,
-      "rdf"     : "http://www.w3.org/1999/02/22-rdf-syntax-ns#" ,
-      "rdfs"    : "http://www.w3.org/2000/01/rdf-schema#" ,
-      "kaa"     : "http://kenchreai.org/kaa/" ,
-      "kaakcp"  : "http://kenchreai.org/kaa/kcp" ,
-      "kaake"   : "http://kenchreai.org/kaa/ke/" ,
-      "kaakth"  : "http://kenchreai.org/kaa/kth/" ,
-      "kaaont"  : "http://kenchreai.org/kaa/ontology" ,
-      "kaatyp"  : "http://kenchreai.org/kaa/typology/" }
 
 app = Flask(__name__)
 
@@ -334,9 +324,9 @@ def kaasparql(kaapath = 'kaa'):
                     dt('Suggested citation', style="margin-top:.5em")
                     # dd(raw("The American Excavations at Kenchreai. “{}.” <i>The Kenchreai Archaeological Archive</i>. {}. &lt;http://kenchreai.org/{}&gt;".format(pagelabel, strftime('%d %b. %Y'),kaapath)), style="margin-top:.5em")
                     if kaapath == 'kaa':
-                      dd(raw("J.L. Rife and S. Heath (Eds.). (2013-{}). <i>The Kenchreai Archaeological Archive</i>. The American Excavations at Kenchreai. Retrieved from &lt;http://kenchreai.org/kaa&gt;".format(strftime('%Y'))), style="margin-top:.5em")
+                        dd(raw("J.L. Rife and S. Heath, eds. (2013-{}). <i>Kenchreai Archaeological Archive</i>. The American Excavations at Kenchreai. &lt;http://kenchreai.org/kaa&gt;".format(strftime('%Y'))), style="margin-top:.5em")
                     else:
-                        dd(raw("“{}.” In <i>The Kenchreai Archaeological Archive</i>, edited by J.L. Rife and S. Heath. The American Excavations at Kenchreai, 2013-{}. &lt;http://kenchreai.org/{}&gt;".format(pagelabel.rstrip(), strftime('%Y'),kaapath)), style="margin-top:.5em")
+                        dd(raw("“{}.” In <i>Kenchreai Archaeological Archive</i>, edited by J.L. Rife and S. Heath. The American Excavations at Kenchreai, 2013-{}. &lt;http://kenchreai.org/{}&gt;".format(pagelabel.rstrip(), strftime('%Y'),kaapath)), style="margin-top:.5em")
 
     kaafooter(kaadoc, kaapath, True)
     
