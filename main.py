@@ -324,9 +324,11 @@ def kaasparql(kaapath = 'kaa'):
                     dt('Suggested citation', style="margin-top:.5em")
                     # dd(raw("The American Excavations at Kenchreai. “{}.” <i>The Kenchreai Archaeological Archive</i>. {}. &lt;http://kenchreai.org/{}&gt;".format(pagelabel, strftime('%d %b. %Y'),kaapath)), style="margin-top:.5em")
                     if kaapath == 'kaa':
-                        dd(raw("J.L. Rife and S. Heath, eds. (2013-{}). <i>Kenchreai Archaeological Archive</i>. The American Excavations at Kenchreai. &lt;http://kenchreai.org/kaa&gt;".format(strftime('%Y'))), style="margin-top:.5em")
+                        with dd():
+                            div(raw("J.L. Rife and S. Heath, eds. (2013-{}). <i>Kenchreai Archaeological Archive</i>. The American Excavations at Kenchreai. &lt;http://kenchreai.org/kaa&gt;".format(strftime('%Y'))), style="margin-top:.5em;margin-left:1.25em;text-indent:-1.25em")
                     else:
-                        dd(raw("“{}.” In <i>Kenchreai Archaeological Archive</i>, edited by J.L. Rife and S. Heath. The American Excavations at Kenchreai, 2013-{}. &lt;http://kenchreai.org/{}&gt;".format(pagelabel.rstrip(), strftime('%Y'),kaapath)), style="margin-top:.5em")
+                        with dd():
+                            div(raw("“{}.” In <i>Kenchreai Archaeological Archive</i>, edited by J.L. Rife and S. Heath. The American Excavations at Kenchreai, 2013-{}. &lt;http://kenchreai.org/{}&gt;".format(pagelabel.rstrip(), strftime('%Y'),kaapath)), style="margin-top:.5em;margin-left:1.25em;text-indent:-1.25em")
 
     kaafooter(kaadoc, kaapath, True)
     
