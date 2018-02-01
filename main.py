@@ -132,10 +132,11 @@ def kaasparql(kaapath = 'kaa'):
         morequery = """SELECT DISTINCT ?o ?olabel ?othumb WHERE {
   <%s> ^kaaont:is-part-of+ ?o .
   ?o rdfs:label ?olabel .
-  ?o rdf:type ?otype
+  ?o rdf:type ?otype .
+   OPTIONAL { ?o kaaont:typological-identification ?otypology }
    OPTIONAL { ?o kaaont:file|kaaont:pagescan|kaaont:photograph|kaaont:drawing ?othumb . FILTER regex(?othumb, '(jpg|png)$') } 
    FILTER isIRI(?o)
-   } ORDER BY ?o LIMIT 4000""" % (uri)
+   } ORDER BY ?otypology ?o LIMIT 4000""" % (uri)
         reasoner.setQuery(morequery)
         reasoner.setReturnFormat(JSON)
         moreresult = reasoner.query().convert()
