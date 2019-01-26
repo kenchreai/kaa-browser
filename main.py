@@ -45,7 +45,15 @@ def kaaheader(doc, kaapath = ''):
     doc.head += link(rel="stylesheet", href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css", integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp", crossorigin="anonymous")
     doc.head += script(src="http://code.jquery.com/jquery-3.1.1.min.js")
     doc.head += script(src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js",integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa",crossorigin="anonymous")
-    doc.head += style("body { padding-top: 60px; }")
+    doc.head += style("""
+@media print
+{    
+    .footer *
+    {
+        display: none !important;
+    }
+}
+body { padding-top: 60px; }""")
     doc.head += meta(name="DC.title",lang="en",content="%s" % (kaapath) )
     doc.head += meta(name="DC.identifier", content="http://kenchreai.org/kaa/%s" % kaapath)
 
