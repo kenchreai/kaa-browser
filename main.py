@@ -48,10 +48,13 @@ def kaaheader(doc, kaapath = ''):
     doc.head += style("""
 @media print
 {    
-    .footer *
+    .noprint *
     {
         display: none !important;
     }
+    a[href]:after {
+    content: none !important;
+  }
 }
 body { padding-top: 60px; }""")
     doc.head += meta(name="DC.title",lang="en",content="%s" % (kaapath) )
@@ -59,7 +62,7 @@ body { padding-top: 60px; }""")
 
 def kaafooter(doc, kaapath = '', editorLink = False ):
     with doc:
-        with footer(cls="footer"):
+        with footer(cls="footer noprint"):
             with div(cls="container"):
                 with p(cls="text-muted"):
                     span("©2017 The ")
@@ -234,10 +237,10 @@ def kaasparql(kaapath = 'kaa'):
                 
                 if more == True:
                     if len(moreresult["results"]["bindings"]) > 0:
-                        dt('Linked to', style="margin-top:.75em", title="All linked resources"  )
+                        dt('Linked to', style="margin-top:.75em", title="All linked resources",cls="noprint"  )
                         curlabel = ''
                         first = 0
-                        with dd(style="margin-top:1em"):
+                        with dd(style="margin-top:1em",cls="noprint"):
                             for row in moreresult["results"]["bindings"]:
                                 if "olabel" in row.keys():
                                     label = row["olabel"]["value"]
@@ -252,7 +255,7 @@ def kaasparql(kaapath = 'kaa'):
                                     else:
                                         pstyle = 'border-top: thin dotted #aaa'   
                                                             
-                                    p(a(label, style=pstyle, rel="dcterms:hasPart", href = row["o"]["value"].replace('http://kenchreai.org','')))
+                                    p(a(label, style=pstyle, rel="dcterms:hasPart", href = row["o"]["value"].replace('http://kenchreai.org','')),cls="noprint")
       
                                 if 'othumb' in row.keys():
                                     thumb = row["othumb"]["value"]
@@ -260,7 +263,7 @@ def kaasparql(kaapath = 'kaa'):
                                         thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
                                     else:
                                         thumb = 'thumbs/' + thumb
-                                    a(img(style="margin-left:1em;margin-bottom:15px;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb), href = row["o"]["value"].replace('http://kenchreai.org',''))
+                                    a(img(style="margin-left:1em;margin-bottom:15px;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb), href = row["o"]["value"].replace('http://kenchreai.org',''),cls="noprint")
 
                 if more == False:
                                     
@@ -298,13 +301,13 @@ def kaasparql(kaapath = 'kaa'):
 
 
                     if len(conceptualresult["results"]["bindings"]) > 0:
-                        dt('Linked to', style="margin-top:.75em", title = "A list of resource that link back to the current resource. Used to display such relationships as Excavation Notebooks being documentation of Areas, Typological Identification of a particular object, Narrower terms in the archaeological typology, or assocaition with a Chronological period or modern year.")
+                        dt('Linked to', style="margin-top:.75em", title = "A list of resource that link back to the current resource. Used to display such relationships as Excavation Notebooks being documentation of Areas, Typological Identification of a particular object, Narrower terms in the archaeological typology, or assocaition with a Chronological period or modern year.",cls="noprint")
                         curlabel = ''
                         first = 0
                         # compile all URIs for "logically part of" resources into a single dd element
                         # issue: i'd like to be able to indicate how many resources are linked to. It's not 
                         # len(conceptualresult["results"]["bindings"]) as that repeats ?s
-                        with dd(style="margin-top:1em"):
+                        with dd(style="margin-top:1em",cls="noprint"):
                             for row in conceptualresult["results"]["bindings"]:
                                 if 'slabel' in row.keys():
                                     label = row["slabel"]["value"]
@@ -330,10 +333,10 @@ def kaasparql(kaapath = 'kaa'):
                                     a(img(style="margin-left:1em;margin-bottom:15px;max-width:150px;max-height:150px",src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/%s" % thumb), href = row["s"]["value"].replace('http://kenchreai.org',''))
                                 
     
-                    dt('Suggested citation', style="margin-top:.5em")
+                    dt('Suggested citation', style="margin-top:.5em",cls="noprint")
                     # dd(raw("The American Excavations at Kenchreai. “{}.” <i>The Kenchreai Archaeological Archive</i>. {}. &lt;http://kenchreai.org/{}&gt;".format(pagelabel, strftime('%d %b. %Y'),kaapath)), style="margin-top:.5em")
                     if kaapath == 'kaa':
-                        with dd():
+                        with dd(cls="noprint"):
                             div(raw("J.L. Rife and S. Heath, eds. (2013-{}). <i>Kenchreai Archaeological Archive</i>. The American Excavations at Kenchreai. &lt;http://kenchreai.org/kaa&gt;".format(strftime('%Y'))), style="margin-top:.5em;margin-left:1.25em;text-indent:-1.25em")
                     else:
                         with dd():
