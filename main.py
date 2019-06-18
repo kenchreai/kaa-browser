@@ -569,11 +569,12 @@ def kthcatalog():
             html += f'{id[1]}<br/>'
             try:
                 thumb = df.query('(s == "{kth}{id[0]}) & (p == "{kth}photograph")').o
+                thumb = list(thumb)[0]
+                
                 if '/' in thumb:
                     thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
                 else:
                     thumb = 'thumbs/' + thumb
-                thumb = list(thumb)[0]
                 html+= f'<img src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/{thumb}"/><br/>'                                    
                 
             except:
