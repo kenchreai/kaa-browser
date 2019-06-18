@@ -18,6 +18,8 @@ from flask import render_template
 from flask import request
 from flask import redirect, url_for, after_this_request
 
+import pandas as pd
+
 from SPARQLWrapper import SPARQLWrapper, JSON
 
 from time import *

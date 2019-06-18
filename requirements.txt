@@ -3,6 +3,7 @@ dominate==2.2.1
 Flask>=0.8
 folium>=0.2.1
 gunicorn>=19.4.5
+pandas
 rdflib==4.2.1
 #whitenoise==2.0.6
 Jinja2==2.7.1
