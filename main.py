@@ -577,8 +577,8 @@ def kthcatalog():
                     thumb = 'thumbs/' + thumb
                 html+= f'<img src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/{thumb}"/><br/>'                                    
                 
-            except:
-                html +="no pic<br/>"
+            except Exception as e:
+                html += f"no pic: {e}<br/>"
         else:
             html += f'{l}<br/>'
     html += "</body></html>"
