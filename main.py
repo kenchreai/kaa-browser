@@ -568,6 +568,7 @@ def kthcatalog():
             id = l.split(" ", 1)
             html += f'{id[1]}<br/>'
             try:
+                1
                 thumb = df.query(f'(s == "{kth}{id[0]}) & (p == "{kth}drawing")').o
                 thumb = list(thumb)[0]
                 
@@ -575,6 +576,7 @@ def kthcatalog():
                     thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
                 else:
                     thumb = 'thumbs/' + thumb
+                    
                 html+= f'<img src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/{thumb}"/><br/>'                                    
                 
             except Exception as e:
