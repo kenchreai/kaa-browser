@@ -541,16 +541,39 @@ def geojson_entity(kaapath):
             for row in geojsonr:
                 pass
 
+def getKthCatItem(id):
+# this query goes to the non-reasoning endpoint
+    kthcatquery = f"""SELECT ?p ?o ?plabel ?pcomment ?olabel  WHERE
+ {{ <http://kenchreai.org/kaa/kth/{id}> ?p ?o .
+ MINUS {{?s kaaont:location ?o }}
+ MINUS {{?s kaaont:observed ?o }}
+ MINUS {{?s kaaont:same-as ?o }}
+ MINUS {{?s kaaont:kaa-note ?o }}
+ MINUS {{?s ?p <http://www.w3.org/2000/01/rdf-schema#Resource> }}
+ OPTIONAL  {{ graph ?g {{?p <http://www.w3.org/2000/01/rdf-schema#label> ?plabel . }} }}
+ OPTIONAL  {{ graph ?g {{?p <http://www.w3.org/2000/01/rdf-schema#comment> ?pcomment . }} }}
+ OPTIONAL  {{ graph ?g {{?o <http://www.w3.org/2000/01/rdf-schema#label> ?olabel . }} }}
+ OPTIONAL  {{ ?o <http://www.w3.org/2000/01/rdf-schema#label> ?olabel . }}
+ OPTIONAL  {{ ?p <http://www.w3.org/2000/01/rdf-schema#label> ?plabel . }}
+  }} ORDER BY ?p ?plabel ?olabel ?o"""
+           
+    endpoint.setQuery(kthcatquery)
+    endpoint.setReturnFormat(JSON) 
+    return endpoint.query().convert()
+
 @app.route('/api/kthcatalog')
 def kthcatalog():
     with urllib.request.urlopen('https://etherpad.net/p/kth-catalog/export/txt') as response:
         txt = response.read().decode('utf-8')
         
         html = "<html><body>"
-        for l in txt.splitlines():
+        for l in txt.splitlines()[1:50]:
             if l[0:3] == 'kth':
                 id = l.split(" ", 1)
-                html += f'{id[0]}: {id[1]}<br/>'
+                html += f'{id[1]}<br/>'
+                cat_json = getKthCatItem(id[0])
+            else:
+                html += f'{l}<br/>'
         html += "</body></html>"
         return html
         
