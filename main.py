@@ -559,27 +559,45 @@ def kthcatalog():
     result = endpoint.query().convert()
 
     df = pd.DataFrame(result['results']['bindings'])
-    df.applymap(lambda x: x['value']) 	
+    df = df.applymap(lambda x: x['value']) 	
 
     
     html = "<html><body>"
-    for l in txt.splitlines()[1:50]:
+    for l in txt.splitlines():
         if l[0:3] == 'kth':
             id = l.split(" ", 1)
             html += f'{id[1]}<br/>'
             try:
-                thumb = df.query(f'(s == "{kth}{id[0]}) & (p == "{kth}drawing")').o
+                thumb = df.query(f'(s == "{kth}{id[0]}") & (p == "http://kenchreai.org/kaa/ontology/drawing")').o
                 thumb = list(thumb)[0]
                 
                 if '/' in thumb:
-                    1 # thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
+                    thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
                 else:
                     thumb = 'thumbs/' + thumb
-                    
-                html+= f'<img src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/{thumb}"/><br/>'                                    
+
+                html+= f'<img src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/{thumb}"/>'                                    
                 
-            except Exception as e:
-                html += f"no pic: {e}<br/>"
+            except:
+                1
+
+            try:
+                thumb = df.query(f'(s == "{kth}{id[0]}") & (p == "http://kenchreai.org/kaa/ontology/photograph")').o
+                thumb = list(thumb)[0]
+                
+                if '/' in thumb:
+                    thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
+                else:
+                    thumb = 'thumbs/' + thumb
+
+                html+= f'<img src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/{thumb}"/>'                                    
+                
+            except:
+                1
+            finally:
+                html+='<br/>'
+
+
         else:
             html += f'{l}<br/>'
     html += "</body></html>"
