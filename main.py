@@ -568,7 +568,7 @@ def kthcatalog():
             id = l.split(" ", 1)
             html += f'{id[1]}<br/>'
             try:
-                thumb = df.query('(s == "{kth}{id[0]}) & (p == "{kth}drawing")').o
+                thumb = df.query(f'(s == "{kth}{id[0]}) & (p == "{kth}drawing")').o
                 thumb = list(thumb)[0]
                 
                 if '/' in thumb:
