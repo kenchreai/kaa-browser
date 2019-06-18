@@ -550,9 +550,9 @@ def kthcatalog():
         txt = response.read().decode('utf-8')
     
     endpoint = SPARQLWrapper("http://kenchreai.org/endpoint/kenchreai/query")
-    kthcatquery = '''SELECT ?id ?p ?o  WHERE {
-  ?id kaaont:comment "KTHPUBCAT" .
-  ?id ?p ?o }'''
+    kthcatquery = '''SELECT ?s ?p ?o  WHERE {
+  ?s kaaont:comment "KTHPUBCAT" .
+  ?s ?p ?o }'''
   
     endpoint.setQuery(kthcatquery)
     endpoint.setReturnFormat(JSON) 
