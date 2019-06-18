@@ -541,41 +541,45 @@ def geojson_entity(kaapath):
             for row in geojsonr:
                 pass
 
-def getKthCatItem(id):
-# this query goes to the non-reasoning endpoint
-    kthcatquery = f"""SELECT ?p ?o ?plabel ?pcomment ?olabel  WHERE
- {{ <http://kenchreai.org/kaa/kth/{id}> ?p ?o .
- MINUS {{?s kaaont:location ?o }}
- MINUS {{?s kaaont:observed ?o }}
- MINUS {{?s kaaont:same-as ?o }}
- MINUS {{?s kaaont:kaa-note ?o }}
- MINUS {{?s ?p <http://www.w3.org/2000/01/rdf-schema#Resource> }}
- OPTIONAL  {{ graph ?g {{?p <http://www.w3.org/2000/01/rdf-schema#label> ?plabel . }} }}
- OPTIONAL  {{ graph ?g {{?p <http://www.w3.org/2000/01/rdf-schema#comment> ?pcomment . }} }}
- OPTIONAL  {{ graph ?g {{?o <http://www.w3.org/2000/01/rdf-schema#label> ?olabel . }} }}
- OPTIONAL  {{ ?o <http://www.w3.org/2000/01/rdf-schema#label> ?olabel . }}
- OPTIONAL  {{ ?p <http://www.w3.org/2000/01/rdf-schema#label> ?plabel . }}
-  }} ORDER BY ?p ?plabel ?olabel ?o"""
-           
-    endpoint.setQuery(kthcatquery)
-    endpoint.setReturnFormat(JSON) 
-    return endpoint.query().convert()
-
 @app.route('/api/kthcatalog')
 def kthcatalog():
+    kth = 'http://kenchreai.org/kaa/kth/'
     with urllib.request.urlopen('https://etherpad.net/p/kth-catalog/export/txt') as response:
         txt = response.read().decode('utf-8')
-        
-        html = "<html><body>"
-        for l in txt.splitlines()[1:50]:
-            if l[0:3] == 'kth':
-                id = l.split(" ", 1)
-                html += f'{id[1]}<br/>'
-                cat_json = getKthCatItem(id[0])
-            else:
-                html += f'{l}<br/>'
-        html += "</body></html>"
-        return html
+    
+    endpoint = SPARQLWrapper("http://kenchreai.org/endpoint/kenchreai/query")
+    kthcatquery = '''SELECT ?id ?p ?o  WHERE {
+  ?id kaaont:comment "KTHPUBCAT" .
+  ?id ?p ?o }'''
+  
+    endpoint.setQuery(kthcatquery)
+    endpoint.setReturnFormat(JSON) 
+    result = endpoint.query().convert()
+
+    df = pd.DataFrame(result['results']['bindings'])
+    df.applymap(lambda x: x['value']) 	
+
+    
+    html = "<html><body>"
+    for l in txt.splitlines()[1:50]:
+        if l[0:3] == 'kth':
+            id = l.split(" ", 1)
+            html += f'{id[1]}<br/>'
+            try:
+                thumb = df.query('(s == "{kth}{id[0]}) & (p == "{kth}photograph")').o
+                if '/' in thumb:
+                    thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
+                else:
+                    thumb = 'thumbs/' + thumb
+                thumb = list(thumb)[0]
+                html+= f'<img src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/{thumb}"/><br/>'                                    
+                
+            except:
+                html +="no pic<br/>"
+        else:
+            html += f'{l}<br/>'
+    html += "</body></html>"
+    return html
         
 
 @app.route('/')
