@@ -572,7 +572,7 @@ def kthcatalog():
                 thumb = list(thumb)[0]
                 
                 if '/' in thumb:
-                    # thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
+                    1 # thumb = re.sub(r"(/[^/]+$)",r"/thumbs\1",thumb)
                 else:
                     thumb = 'thumbs/' + thumb
                     
