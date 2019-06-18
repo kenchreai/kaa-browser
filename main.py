@@ -541,6 +541,20 @@ def geojson_entity(kaapath):
             for row in geojsonr:
                 pass
 
+@app.route('/api/kthcatalog')
+def kthcatalog():
+    with urllib.request.urlopen('https://etherpad.net/p/kth-catalog/export/txt') as response:
+        txt = response.read().decode('utf-8')
+        
+        html = "<html><body>"
+        for l in txt.splitlines():
+            if l[0:3] == 'kth':
+                id = l.split(" ", 1)
+                html += f'{id[0]}: {id[1]}<br/>'
+        html += "</body></html>"
+        return html
+        
+
 @app.route('/')
 def index():
     return redirect("http://www.kenchreai.org/", code=302)
