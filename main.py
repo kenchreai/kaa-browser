@@ -618,7 +618,7 @@ h3,h4 {
     for l in txt.splitlines():
         if l[0:3] == 'kth':
             id = l.split(" ", 1)
-            html += f'<p><a style="plain" href="{kth}{id[0]}" target="_new">{id[0]}</a>: {id[1]}</p>'
+            html += f'<p>{id[1]} (<a style="plain" href="{kth}{id[0]}" target="_new">{id[0]}</a>)</p>'
             try:
                 thumb = df.query(f'(s == "{kth}{id[0]}") & (p == "http://kenchreai.org/kaa/ontology/drawing")').o
                 thumb = list(thumb)[0]
