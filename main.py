@@ -623,9 +623,9 @@ h3,h4 {
             
             dims = ""
             try:
-                tmp = df.query(f'(s == "{kth}{id[0]}") & (p == "http://kenchreai.org/kaa/ontology/estimated-rim-diameter")').o
+                tmp = df.query(f'(s == "{kth}{id[0]}") & (p == "http://kenchreai.org/kaa/ontology/rim-diameter-estimated")').o
                 tmp = list(tmp)[0]
-                dims += f'Est. D. {tmp}</p>'
+                dims += f'Est. D. {tmp}'
             except Exception:
                 pass
             
