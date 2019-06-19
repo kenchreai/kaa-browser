@@ -566,7 +566,7 @@ def kthcatalog():
     for l in txt.splitlines():
         if l[0:3] == 'kth':
             id = l.split(" ", 1)
-            html += f'{<a href="{kth}{id[0]}" target="_new">{id[0]}: {id[1]}<br/>'
+            html += f'<a href="{kth}{id[0]}" target="_new">{id[0]}: {id[1]}<br/>'
             try:
                 thumb = df.query(f'(s == "{kth}{id[0]}") & (p == "http://kenchreai.org/kaa/ontology/drawing")').o
                 thumb = list(thumb)[0]
