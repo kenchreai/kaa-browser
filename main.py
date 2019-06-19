@@ -582,6 +582,12 @@ body {
   tab-size: 8;
 }
 
+a {
+  border-bottom:thin dotted gray;
+  color:black;
+  text-decoration:none;
+}
+
 h1 {
   font-size:1.5em;
   text-align:center
