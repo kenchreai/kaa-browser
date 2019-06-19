@@ -567,8 +567,6 @@ def kthcatalog():
 <head>
 <style>
 body {
-    font-family:cambria;
- font-size: 12pt;
  margin:auto;
  width:70%;
  }
@@ -577,9 +575,10 @@ body {
   text-indent:0;
   padding:0;
   margin: 0;
-  line-height:1.4em;
+  line-height:1.2em;
   text-align: justify;
-  tab-size: 8;
+  font-size:11pt;
+  font-family: Cambria
 }
 
 a {
@@ -624,6 +623,22 @@ h3,h4 {
             #preservation
             try:
                 tmp = df.query(f'(s == "{kth}{id[0]}") & (p == "http://kenchreai.org/kaa/ontology/preservation-comment")').o
+                tmp = list(tmp)[0]
+                html += f'<p>{tmp}</p>'
+            except Exception:
+                pass
+ 
+             #fabric
+            try:
+                tmp = df.query(f'(s == "{kth}{id[0]}") & (p == "http://kenchreai.org/kaa/ontology/fabric-description")').o
+                tmp = list(tmp)[0]
+                html += f'<p>{tmp}</p>'
+            except Exception:
+                pass
+
+             #description
+            try:
+                tmp = df.query(f'(s == "{kth}{id[0]}") & (p == "http://kenchreai.org/kaa/ontology/description")').o
                 tmp = list(tmp)[0]
                 html += f'<p>{tmp}</p>'
             except Exception:
