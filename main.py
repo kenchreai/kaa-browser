@@ -562,7 +562,14 @@ def kthcatalog():
     df = df.applymap(lambda x: x['value']) 	
 
     
-    html = "<html><body>"
+    html = """<html><head><style>
+body {
+    font-family:cambria;
+ font-size: 12pt;
+ margin:auto;
+ width:70%;
+ }
+</style></head><body>"""
     for l in txt.splitlines():
         if l[0:3] == 'kth':
             id = l.split(" ", 1)
