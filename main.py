@@ -623,7 +623,7 @@ h3,h4 {
             html += f'<p>{entry_counter}. {id[1]} (<a style="plain" href="{kth}{id[0]}" target="_new">{id[0]}</a>)</p>'
             #preservation
             try:
-                tmp = df.query(f'(s == "{kth}{id[0]}") & (p == "http://kenchreai.org/kaa/preservation-comment")').o
+                tmp = df.query(f'(s == "{kth}{id[0]}") & (p == "http://kenchreai.org/kaa/ontology/preservation-comment")').o
                 tmp = list(tmp)[0]
                 html += f'<p>{tmp}</p>'
             except Exception:
