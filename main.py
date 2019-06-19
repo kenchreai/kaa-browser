@@ -620,6 +620,18 @@ h3,h4 {
             entry_counter += 1
             id = l.split(" ", 1)
             html += f'<p>{entry_counter}. {id[1]} (<a style="plain" href="{kth}{id[0]}" target="_new">{id[0]}</a>)</p>'
+            
+            dims = ""
+            try:
+                tmp = df.query(f'(s == "{kth}{id[0]}") & (p == "http://kenchreai.org/kaa/ontology/estimated-rim-diameter")').o
+                tmp = list(tmp)[0]
+                dims += f'Est. D. {tmp}</p>'
+            except Exception:
+                pass
+            
+            if len(dims) > 0:
+                html += f'<p>{dims}</p>'
+                
             #preservation
             try:
                 tmp = df.query(f'(s == "{kth}{id[0]}") & (p == "http://kenchreai.org/kaa/ontology/preservation-comment")').o
