@@ -574,7 +574,7 @@ body {
  }
  
  p {
-  text-indent:1em;
+  text-indent:0;
   padding:0;
   margin: 0;
   line-height:1.4em;
@@ -615,10 +615,21 @@ h3,h4 {
 </style>
 </head>
 <body>"""
+    entry_counter = 0
     for l in txt.splitlines():
         if l[0:3] == 'kth':
+            entry_counter += 1
             id = l.split(" ", 1)
-            html += f'<p>{id[1]} (<a style="plain" href="{kth}{id[0]}" target="_new">{id[0]}</a>)</p>'
+            html += f'<p>{entry_counter}. {id[1]} (<a style="plain" href="{kth}{id[0]}" target="_new">{id[0]}</a>)</p>'
+            #preservation
+            try:
+                tmp = df.query(f'(s == "{kth}{id[0]}") & (p == "http://kenchreai.org/kaa/preservation-comment")').o
+                tmp = list(tmp)[0]
+                html += f'<p>{tmp}</p>'
+            except Exception:
+                pass
+            
+            # drawing
             try:
                 thumb = df.query(f'(s == "{kth}{id[0]}") & (p == "http://kenchreai.org/kaa/ontology/drawing")').o
                 thumb = list(thumb)[0]
@@ -629,10 +640,10 @@ h3,h4 {
                     thumb = 'thumbs/' + thumb
 
                 html+= f'<img src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/{thumb}"/>'                                    
+            except Exception:
+                pass
                 
-            except:
-                1
-
+            # photograph
             try:
                 thumb = df.query(f'(s == "{kth}{id[0]}") & (p == "http://kenchreai.org/kaa/ontology/photograph")').o
                 thumb = list(thumb)[0]
@@ -643,9 +654,8 @@ h3,h4 {
                     thumb = 'thumbs/' + thumb
 
                 html+= f'<img src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/{thumb}"/>'                                    
-                
-            except:
-                1
+            except Exception:
+                pass
             finally:
                 html+='<br/>'
 
