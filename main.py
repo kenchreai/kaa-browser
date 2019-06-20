@@ -619,7 +619,7 @@ h3,h4 {
         if l[0:3] == 'kth':
             entry_counter += 1
             id = l.split(" ", 1)
-            html += f'<p>{entry_counter}. {id[1]} (<a style="plain" href="{kth}{id[0]}" target="_new">{id[0]}</a>)</p>'
+            html += f'<p><i>{entry_counter}</i>. {id[1]} (<a style="plain" href="{kth}{id[0]}" target="_new">{id[0]}</a>)</p>'
             
             dims = ""
             try:
