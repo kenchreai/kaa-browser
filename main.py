@@ -639,18 +639,18 @@ h3,h4 {
                 html += f'<p>{tmp}</p>'
             except Exception:
                 pass
- 
-             #fabric
+
+            #description
             try:
-                tmp = df.query(f'(s == "{kth}{id[0]}") & (p == "http://kenchreai.org/kaa/ontology/fabric-description")').o
+                tmp = df.query(f'(s == "{kth}{id[0]}") & (p == "http://kenchreai.org/kaa/ontology/description")').o
                 tmp = list(tmp)[0]
                 html += f'<p>{tmp}</p>'
             except Exception:
                 pass
-
-             #description
+ 
+            #fabric
             try:
-                tmp = df.query(f'(s == "{kth}{id[0]}") & (p == "http://kenchreai.org/kaa/ontology/description")').o
+                tmp = df.query(f'(s == "{kth}{id[0]}") & (p == "http://kenchreai.org/kaa/ontology/fabric-description")').o
                 tmp = list(tmp)[0]
                 html += f'<p>{tmp}</p>'
             except Exception:
