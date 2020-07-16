@@ -35,8 +35,12 @@ suppressmore = ['http://kenchreai.org/kaa' ,
 app = Flask(__name__)
 
 # 'endpoint' does not have reasoning enabled. 'reasoner' does.
-endpoint = SPARQLWrapper("http://kenchreai.org/endpoint/kenchreai/query")
-reasoner = SPARQLWrapper("http://kenchreai.org/reasoner/kenchreai/query")
+# endpoint = SPARQLWrapper("http://kenchreai.org/endpoint/kenchreai/query")
+# reasoner = SPARQLWrapper("http://kenchreai.org/reasoner/kenchreai/query")
+
+endpoint = SPARQLWrapper("http://52.89.209.134:3030/kaa/sparql")
+reasoner = SPARQLWrapper("http://52.89.209.134:3030/kaa_reasoner/sparql")
+
 
 def kaaheader(doc, kaapath = ''):
     
@@ -94,17 +98,19 @@ def kaasparql(kaapath = 'kaa'):
         uri = 'http://kenchreai.org/kaa/' + kaapath
 
     # this query goes to the non-reasoning endpoint
-    kaaquery = """SELECT ?p ?o ?plabel ?pcomment ?pxorder ?olabel  WHERE
+    kaaquery = """PREFIX kaaont: <http://kenchreai.org/kaa/ontology/>
+
+SELECT ?p ?o ?plabel ?pcomment ?pxorder ?olabel  WHERE
 { { <%s> ?p ?o .
  MINUS {?s kaaont:location ?o }
  MINUS {?s kaaont:observed ?o }
  MINUS {?s kaaont:same-as ?o }
  MINUS {?s kaaont:kaa-note ?o }
  MINUS {?s ?p <http://www.w3.org/2000/01/rdf-schema#Resource> }
- OPTIONAL  { graph ?g {?p <http://www.w3.org/2000/01/rdf-schema#label> ?plabel . } }
- OPTIONAL  { graph ?g {?p <http://www.w3.org/2000/01/rdf-schema#comment> ?pcomment . } }
- OPTIONAL  { graph ?g {?p kaaont:x-sort-order ?pxorder . } }
- OPTIONAL  { graph ?g {?o <http://www.w3.org/2000/01/rdf-schema#label> ?olabel . } }
+ OPTIONAL  { ?p <http://www.w3.org/2000/01/rdf-schema#label> ?plabel .  }
+ OPTIONAL  { ?p <http://www.w3.org/2000/01/rdf-schema#comment> ?pcomment .  }
+ OPTIONAL  { ?p kaaont:x-sort-order ?pxorder .  }
+ OPTIONAL  { ?o <http://www.w3.org/2000/01/rdf-schema#label> ?olabel . }
  OPTIONAL  { ?o <http://www.w3.org/2000/01/rdf-schema#label> ?olabel . }
  OPTIONAL  { ?p <http://www.w3.org/2000/01/rdf-schema#label> ?plabel . }
   }\
@@ -116,7 +122,8 @@ def kaasparql(kaapath = 'kaa'):
 
     if more == False:
         # This query should be passed to reasoner
-        physicalquery = """SELECT  ?s ?p ?slabel ?sthumb WHERE
+        physicalquery = """PREFIX kaaont: <http://kenchreai.org/kaa/ontology/>
+    SELECT  ?s ?p ?slabel ?sthumb WHERE
      { { <%s> <http://kenchreai.org/kaa/ontology/has-physical-part> ?s .
       OPTIONAL  { ?s <http://kenchreai.org/kaa/ontology/next> <%s> .
      ?s ?p <%s> }
@@ -129,7 +136,9 @@ def kaasparql(kaapath = 'kaa'):
         physicalresult = reasoner.query().convert()
 
         # This query should be passed to reasoner
-        conceptualquery = """SELECT  ?s ?p ?slabel ?sthumb WHERE
+        conceptualquery = """PREFIX kaaont: <http://kenchreai.org/kaa/ontology/>
+
+    SELECT  ?s ?p ?slabel ?sthumb WHERE
      { {  { <%s> <http://kenchreai.org/kaa/ontology/has-logical-part> ?s . }
      UNION  { ?s <http://kenchreai.org/kaa/ontology/same-as> <%s> .  }
      OPTIONAL  { ?s <http://kenchreai.org/kaa/ontology/next> <%s> . ?s ?p <%s> }
@@ -142,7 +151,12 @@ def kaasparql(kaapath = 'kaa'):
     
     # This query should be passed to reasoner
     if more == True:
-        morequery = """SELECT DISTINCT ?o ?olabel ?othumb WHERE {
+        morequery = """PREFIX kaaont: <http://kenchreai.org/kaa/ontology/>
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+
+  SELECT DISTINCT ?o ?olabel ?othumb WHERE {
   <%s> ^kaaont:is-part-of+ ?o .
   ?o rdfs:label ?olabel .
   ?o rdf:type ?otype .
@@ -155,7 +169,10 @@ def kaasparql(kaapath = 'kaa'):
         moreresult = reasoner.query().convert()
 
 
-    kaalabel = """SELECT ?slabel 
+    kaalabel = """PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+SELECT ?slabel 
            WHERE {
               <%s> rdfs:label ?slabel
            }""" % (uri)
@@ -178,9 +195,10 @@ def kaasparql(kaapath = 'kaa'):
            with div(cls="container-fluid"):
                with div(cls="navbar-header"):
                    a("Kenchreai Archaeological Archive", href="/kaa",cls="navbar-brand")
-                   with form(cls="navbar-form navbar-right", role="search", action="/api/full-text-search"):
-                       with div(cls="form-group"):
-                           input(id="q", name="q", type="text",cls="form-control",placeholder="Search...")
+                   span(" [Note: kaa is temporarily 'under construction' so some functions may be unstable or unavailable.]")
+                   #with form(cls="navbar-form navbar-right", role="search", action="/api/full-text-search"):
+                   #    with div(cls="form-group"):
+                   #        input(id="q", name="q", type="text",cls="form-control",placeholder="Search...")
         
         with div(cls="container", about="/kaa/%s" % (kaapath), style="margin-top:.5em"):
             
@@ -365,7 +383,12 @@ def fulltextsearch():
         qexists = False
 
     if qexists == True:
-        ftquery = """SELECT DISTINCT ?s ?slabel ?sthumb
+        ftquery = """PREFIX kaaont: <http://kenchreai.org/kaa/ontology/>
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+
+                    SELECT DISTINCT ?s ?slabel ?sthumb
                     WHERE {
                     (?l ?score) <tag:stardog:api:property:textMatch> ( '%s' 2000).
                     ?s ?p ?l . 
@@ -459,7 +482,10 @@ def display_image_file():
 
         # q = q.replace(' ','%20')
 
-        imgquery = """SELECT ?s ?slabel ?file ?p
+        imgquery = """PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+SELECT ?s ?slabel ?file ?p
                WHERE {
                    ?s ?p '%s' .
                    OPTIONAL { ?s rdfs:label ?slabel . }
@@ -550,7 +576,8 @@ def kthcatalog():
         txt = response.read().decode('utf-8')
     
     endpoint = SPARQLWrapper("http://kenchreai.org/endpoint/kenchreai/query")
-    kthcatquery = '''SELECT ?s ?p ?o  WHERE {
+    kthcatquery = '''PREFIX kaaont: <http://kenchreai.org/kaa/ontology/>
+    SELECT ?s ?p ?o  WHERE {
   ?s kaaont:comment "KTHPUBCAT" .
   ?s ?p ?o }'''
   
