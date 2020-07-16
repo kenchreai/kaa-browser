@@ -195,10 +195,10 @@ SELECT ?slabel
            with div(cls="container-fluid"):
                with div(cls="navbar-header"):
                    a("Kenchreai Archaeological Archive", href="/kaa",cls="navbar-brand")
-                   span(" [Note: kaa is temporarily 'under construction' so some functions may be unstable or unavailable.]")
-                   #with form(cls="navbar-form navbar-right", role="search", action="/api/full-text-search"):
-                   #    with div(cls="form-group"):
-                   #        input(id="q", name="q", type="text",cls="form-control",placeholder="Search...")
+                   #span(" [Note: kaa is temporarily 'under construction' so some functions may be unstable or unavailable.]")
+                   with form(cls="navbar-form navbar-right", role="search", action="/api/full-text-search"):
+                       with div(cls="form-group"):
+                           input(id="q", name="q", type="text",cls="form-control",placeholder="Search...")
         
         with div(cls="container", about="/kaa/%s" % (kaapath), style="margin-top:.5em"):
             
@@ -395,7 +395,17 @@ PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                     ?s rdfs:label ?slabel .
                     OPTIONAL { ?s kaaont:drawing|kaaont:photograph ?sthumb . FILTER regex(?sthumb, '(jpg|png)$') }
                     } ORDER BY ?s ?slabel""" % (q)
+        ftquery = """PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX text: <http://jena.apache.org/text#>
+PREFIX kaaont: <http://kenchreai.org/kaa/ontology/>
 
+PREFIX ex: <http://example.org/>
+
+SELECT ?s ?slabel
+WHERE { 
+    ?s text:query (ex:textFields '%s') ;
+       rdfs:label ?slabel .
+}""" % (q)
         endpoint.setQuery(ftquery)
         endpoint.setReturnFormat(JSON)
         ftresult = endpoint.query().convert()
@@ -413,17 +423,17 @@ PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                    with form(cls="navbar-form navbar-left", role="search"):
                        with div(cls="form-group"):
                            input(id="q", name="q", type="text",cls="form-control",placeholder="Search...")
-                   with ul(cls="nav navbar-nav"):
-                       with li(cls="dropdown"):
-                           a("Example Searches", href="#",cls="dropdown-toggle", data_toggle="dropdown")
-                           with ul(cls="dropdown-menu", role="menu"):
-                               li(a('+ke +1221', href="/api/full-text-search?q=%2Bke%20%2B1221"))
-                               li(a('+corinthian +lamp', href="/api/full-text-search?q=%2Bcorinthian%20%2Blamp"))
-                               li(a('+gold -ring', href="/api/full-text-search?q=%2Bgold%20%2Dring"))
-                               li(a('"ke 1221"', href="/api/full-text-search?q=%22ke%201221%22"))
-                               li(a('fish*', href="/api/full-text-search?q=fish%2A"))
-                               li(a('ΔΙΟΝΕΙΚΟΥ', href="/api/full-text-search?q=ΔΙΟΝΕΙΚΟΥ"))
-                               li(a('"Asia Minor"', href="/api/full-text-search?q=%22Asia%20Minor%22"))
+                   #with ul(cls="nav navbar-nav"):
+                    #   with li(cls="dropdown"):
+                     #      a("Example Searches", href="#",cls="dropdown-toggle", data_toggle="dropdown")
+                      #     with ul(cls="dropdown-menu", role="menu"):
+                       #        li(a('+ke +1221', href="/api/full-text-search?q=%2Bke%20%2B1221"))
+                       #        li(a('+corinthian +lamp', href="/api/full-text-search?q=%2Bcorinthian%20%2Blamp"))
+                        #       li(a('+gold -ring', href="/api/full-text-search?q=%2Bgold%20%2Dring"))
+                        #       li(a('"ke 1221"', href="/api/full-text-search?q=%22ke%201221%22"))
+                        #       li(a('fish*', href="/api/full-text-search?q=fish%2A"))
+                        #       li(a('ΔΙΟΝΕΙΚΟΥ', href="/api/full-text-search?q=ΔΙΟΝΕΙΚΟΥ"))
+                         #      li(a('"Asia Minor"', href="/api/full-text-search?q=%22Asia%20Minor%22"))
 
         with dl(cls="dl-horizontal"):
 
