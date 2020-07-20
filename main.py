@@ -38,8 +38,8 @@ app = Flask(__name__)
 # endpoint = SPARQLWrapper("http://kenchreai.org/endpoint/kenchreai/query")
 # reasoner = SPARQLWrapper("http://kenchreai.org/reasoner/kenchreai/query")
 
-endpoint = SPARQLWrapper("http://52.89.209.134:3030/kaa/sparql")
-reasoner = SPARQLWrapper("http://52.89.209.134:3030/kaa_reasoner/sparql")
+endpoint = SPARQLWrapper("http://kenchreai.org:3030/kaa_endpoint/sparql")
+reasoner = SPARQLWrapper("http://kenchreai.org:3030/kaa_reasoner/sparql")
 
 
 def kaaheader(doc, kaapath = ''):
