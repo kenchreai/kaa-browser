@@ -172,10 +172,11 @@ PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
     kaalabel = """PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
-SELECT ?slabel 
+SELECT ?slabel ?stype
            WHERE {
-              <%s> rdfs:label ?slabel
-           }""" % (uri)
+              <%s> rdfs:label ?slabel .
+              OPTIONAL { <%s>  rdf:type/rdfs:label      ?stype . }
+           }""" % (uri, uri)
     endpoint.setQuery(kaalabel)
     endpoint.setReturnFormat(JSON)
     labelresult = endpoint.query().convert()
@@ -185,6 +186,11 @@ SELECT ?slabel
         pagelabel = result["slabel"]["value"]
     if pagelabel == '':
         pagelabel = 'kaa:' + kaapath
+
+    pagetype = ''
+    for result in labelresult["results"]["bindings"]:
+        if 'stype' in result.keys():
+            pagetype = result["stype"]["value"]
 
     kaadoc = dominate.document(title="Kenchreai Archaeological Archive: %s" % (pagelabel))
     kaaheader(kaadoc, pagelabel)
@@ -221,7 +227,10 @@ SELECT ?slabel
                         a('show fewer links', href='/kaa/'+kaapath,title='Clicking here will cause the database to show only directly lined resources')
                         span('] ')
 
-
+                if pagetype != '':
+                    dt("Type", style="white-space: nowrap; width:12em")
+                    dd(pagetype)
+                
                 for row in kaaresult["results"]["bindings"]:
                     
                     if 'pcomment' in row.keys():
