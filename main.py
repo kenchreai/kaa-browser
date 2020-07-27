@@ -163,7 +163,7 @@ PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
    OPTIONAL { ?o kaaont:typological-identification ?otypology }
    OPTIONAL { ?o kaaont:file|kaaont:pagescan|kaaont:photograph|kaaont:drawing ?othumb . FILTER regex(?othumb, '(jpg|png)$') } 
    FILTER isIRI(?o)
-   } ORDER BY ?otypology ?o LIMIT 4000""" % (uri)
+   } ORDER BY ?otype ?o  LIMIT 4000""" % (uri)
         reasoner.setQuery(morequery)
         reasoner.setReturnFormat(JSON)
         moreresult = reasoner.query().convert()
