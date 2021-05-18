@@ -6,5 +6,4 @@ gunicorn
 Jinja2
 pandas
 rdflib
-Werkzeug==1.0.1
-
+Werkzeug
