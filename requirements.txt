@@ -4,8 +4,8 @@ Flask>=0.8
 folium>=0.2.1
 gunicorn>=19.4.5
 pandas
-rdflib==4.2.1
+rdflib
 #whitenoise==2.0.6
 Jinja2==2.7.1
-SPARQLWrapper>=1.7.6
+#SPARQLWrapper>=1.7.6
 Werkzeug==0.9.4
