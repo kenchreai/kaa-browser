@@ -20,11 +20,12 @@ from flask import redirect, url_for, after_this_request
 
 import pandas as pd
 
-from SPARQLWrapper import SPARQLWrapper, JSON
+#from SPARQLWrapper import SPARQLWrapper, JSON
 
 from time import *
 
-import rdflib
+import rdflib as rdf
+from rdflib.plugins.stores import sparqlstore
 
 # Don't show "More links" for these URIs. For the time being...
 suppressmore = ['http://kenchreai.org/kaa' ,
@@ -35,11 +36,25 @@ suppressmore = ['http://kenchreai.org/kaa' ,
 app = Flask(__name__)
 
 # 'endpoint' does not have reasoning enabled. 'reasoner' does.
-# endpoint = SPARQLWrapper("http://kenchreai.org/endpoint/kenchreai/query")
-# reasoner = SPARQLWrapper("http://kenchreai.org/reasoner/kenchreai/query")
 
-endpoint = SPARQLWrapper("http://kenchreai.org:3030/kaa_endpoint/sparql")
-reasoner = SPARQLWrapper("http://kenchreai.org:3030/kaa_reasoner/sparql")
+endpoint_store = rdf.plugin.get("SPARQLStore", rdf.store.Store)(endpoint="http://kenchreai.org:3030/kaa_endpoint/sparql",
+                                                       context_aware = False,
+                                                       returnFormat = 'json')
+
+reasoner_store = rdf.plugin.get("SPARQLStore", rdf.store.Store)(endpoint="http://kenchreai.org:3030/kaa_reasoner/sparql",
+                                                       context_aware = False,
+                                                       returnFormat = 'json')
+
+endpoint = rdf.Graph(endpoint_store)
+reasoner = rdf.Graph(reasoner_store)
+
+
+def format_citations(unformatted):
+    p = r'\[@([^, ]+)((, ?[^\]]*)\]|\])'
+    s = r'<a href="/kaa/zotero/\1">\1</a>\3'
+    citation_html = re.sub(p,s,unformatted, flags=re.S)
+
+    return citation_html
 
 
 def kaaheader(doc, kaapath = ''):
@@ -116,9 +131,9 @@ SELECT ?p ?o ?plabel ?pcomment ?pxorder ?olabel  WHERE
   }\
  UNION { <%s> kaaont:observed ?s . ?s ?p ?o . } } ORDER BY ?pxorder ?p ?plabel ?olabel ?o""" % (uri,uri)
            
-    endpoint.setQuery(kaaquery)
-    endpoint.setReturnFormat(JSON)
-    kaaresult = endpoint.query().convert()
+    #endpoint.setQuery(kaaquery)
+    #endpoint.setReturnFormat(JSON)
+    kaaresult = endpoint.query(kaaquery).json
 
     if more == False:
         # This query should be passed to reasoner
@@ -131,9 +146,9 @@ SELECT ?p ?o ?plabel ?pcomment ?pxorder ?olabel  WHERE
      OPTIONAL  { ?s <http://xmlns.com/foaf/0.1/name> ?slabel . }
      OPTIONAL { ?s kaaont:file|kaaont:pagescan|kaaont:photograph|kaaont:drawing ?sthumb . FILTER regex(?sthumb, '(jpg|png)$')  }
      } } ORDER BY ?s ?slabel""" % (uri,uri,uri)
-        reasoner.setQuery(physicalquery)
-        reasoner.setReturnFormat(JSON)
-        physicalresult = reasoner.query().convert()
+        #reasoner.setQuery(physicalquery)
+        #reasoner.setReturnFormat(JSON)
+        physicalresult = reasoner.query(physicalquery).json
 
         # This query should be passed to reasoner
         conceptualquery = """PREFIX kaaont: <http://kenchreai.org/kaa/ontology/>
@@ -145,9 +160,9 @@ SELECT ?p ?o ?plabel ?pcomment ?pxorder ?olabel  WHERE
      OPTIONAL  { ?s <http://www.w3.org/2000/01/rdf-schema#label> ?slabel . }\
      OPTIONAL { ?s kaaont:file|kaaont:pagescan|kaaont:photograph|kaaont:drawing ?sthumb . FILTER regex(?sthumb, '(jpg|png)$') } }
      FILTER (!isBlank(?s))  } ORDER BY ?s ?slabel""" % (uri,uri,uri,uri)
-        reasoner.setQuery(conceptualquery)
-        reasoner.setReturnFormat(JSON)
-        conceptualresult = reasoner.query().convert()
+        #reasoner.setQuery(conceptualquery)
+        #reasoner.setReturnFormat(JSON)
+        conceptualresult = reasoner.query(conceptualquery).json
     
     # This query should be passed to reasoner
     if more == True:
@@ -164,9 +179,9 @@ PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
    OPTIONAL { ?o kaaont:file|kaaont:pagescan|kaaont:photograph|kaaont:drawing ?othumb . FILTER regex(?othumb, '(jpg|png)$') } 
    FILTER isIRI(?o)
    } ORDER BY ?otype ?o  LIMIT 4000""" % (uri)
-        reasoner.setQuery(morequery)
-        reasoner.setReturnFormat(JSON)
-        moreresult = reasoner.query().convert()
+        #reasoner.setQuery(morequery)
+        #reasoner.setReturnFormat(JSON)
+        moreresult = reasoner.query(morequery).json
 
 
     kaalabel = """PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -177,9 +192,9 @@ SELECT ?slabel ?stype
               <%s> rdfs:label ?slabel .
               OPTIONAL { <%s>  rdf:type/rdfs:label      ?stype . }
            }""" % (uri, uri)
-    endpoint.setQuery(kaalabel)
-    endpoint.setReturnFormat(JSON)
-    labelresult = endpoint.query().convert()
+    #endpoint.setQuery(kaalabel)
+    #endpoint.setReturnFormat(JSON)
+    labelresult = endpoint.query(kaalabel).json
 
     pagelabel = ''
     for result in labelresult["results"]["bindings"]:
@@ -202,9 +217,9 @@ SELECT ?slabel ?stype
                with div(cls="navbar-header"):
                    a("Kenchreai Archaeological Archive", href="/kaa",cls="navbar-brand")
                    #span(" [Note: kaa is temporarily 'under construction' so some functions may be unstable or unavailable.]")
-                   with form(cls="navbar-form navbar-right", role="search", action="/api/full-text-search"):
-                       with div(cls="form-group"):
-                           input(id="q", name="q", type="text",cls="form-control",placeholder="Search...")
+                   # with form(cls="navbar-form navbar-right", role="search", action="/api/full-text-search"):
+                   #    with div(cls="form-group"):
+                   #        " " #input(id="q", name="q", type="text",cls="form-control",placeholder="Search...")
         
         with div(cls="container", about="/kaa/%s" % (kaapath), style="margin-top:.5em"):
             
@@ -378,9 +393,19 @@ SELECT ?slabel ?stype
         asoup = BeautifulSoup('[<a href="%s">next</a>]' % next.replace('http://kenchreai.org',''), 'html.parser')
         tag = soup.find(id='next')
         tag.append(asoup)
-        return str(soup)
+
+        pre_citation = str(soup)
+
+        citation_html = format_citations(pre_citation)
+
+        return citation_html
     else:
-        return kaadoc.render()
+
+        pre_citation = kaadoc.render()
+        
+        citation_html = format_citations(pre_citation)
+
+        return citation_html
 
 @app.route('/api/full-text-search')
 def fulltextsearch():
@@ -417,9 +442,9 @@ WHERE {
     ?s text:query (ex:textFields '%s') ;
        rdfs:label ?slabel .
 }""" % (q)
-        endpoint.setQuery(ftquery)
-        endpoint.setReturnFormat(JSON)
-        ftresult = endpoint.query().convert()
+        #endpoint.setQuery(ftquery)
+        #endpoint.setReturnFormat(JSON)
+        ftresult = endpoint.query(ftquery).json
 
 
     ftdoc = dominate.document(title="Kenchreai Archaeological Archive: Full-Text Search")
@@ -513,9 +538,9 @@ SELECT ?s ?slabel ?file ?p
                    BIND ("%s" as ?file) 
                } ORDER BY ?s ?slabel ?p""" % (q,q)
 
-        endpoint.setQuery(imgquery)
-        endpoint.setReturnFormat(JSON)
-        imgresult = endpoint.query().convert()
+        #endpoint.setQuery(imgquery)
+        #endpoint.setReturnFormat(JSON)
+        imgresult = endpoint.query(imgquery).json
 
         imgdoc = dominate.document(title="Kenchreai Archaeological Archive: Image")
         kaaheader(imgdoc, '')
@@ -738,7 +763,13 @@ h3,h4 {
         else:
             html += f'{l}'
 
-    html += "</body></html>"
+    pre_citation_html += "</body></html>"
+
+    p = r'\[@([^, ]+)((, ?[^\]]*)\]|\])'
+    s = r'<a href="/zotero/\1">\1</a>\3'
+    html = re.sub(p,s,pre_citation_html, flags=re.S)
+
+
     return html
         
 
