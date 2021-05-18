@@ -1,11 +1,10 @@
-beautifulsoup4 >= 4.5.1
-dominate==2.2.1
-Flask>=0.8
-folium>=0.2.1
-gunicorn>=19.4.5
+beautifulsoup4
+dominate
+Flask
+folium
+gunicorn
+Jinja2
 pandas
 rdflib
-#whitenoise==2.0.6
-Jinja2==2.7.1
-#SPARQLWrapper>=1.7.6
-Werkzeug==0.9.4
+Werkzeug==1.0.1
+
