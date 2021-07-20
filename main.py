@@ -217,9 +217,9 @@ SELECT ?slabel ?stype
                with div(cls="navbar-header"):
                    a("Kenchreai Archaeological Archive", href="/kaa",cls="navbar-brand")
                    #span(" [Note: kaa is temporarily 'under construction' so some functions may be unstable or unavailable.]")
-                   # with form(cls="navbar-form navbar-right", role="search", action="/api/full-text-search"):
-                   #    with div(cls="form-group"):
-                   #        " " #input(id="q", name="q", type="text",cls="form-control",placeholder="Search...")
+                   with form(cls="navbar-form navbar-right", role="search", action="/api/full-text-search"):
+                       with div(cls="form-group"):
+                           input_(id="q", name="q", type="text",cls="form-control",placeholder="Search...")
         
         with div(cls="container", about="/kaa/%s" % (kaapath), style="margin-top:.5em"):
             
@@ -458,7 +458,7 @@ WHERE {
                    a("KAA: Full-Text Search" , href="/kaa",cls="navbar-brand")
                    with form(cls="navbar-form navbar-left", role="search"):
                        with div(cls="form-group"):
-                           input(id="q", name="q", type="text",cls="form-control",placeholder="Search...")
+                           input_(id="q", name="q", type="text",cls="form-control",placeholder="Search...")
                    #with ul(cls="nav navbar-nav"):
                     #   with li(cls="dropdown"):
                      #      a("Example Searches", href="#",cls="dropdown-toggle", data_toggle="dropdown")
@@ -555,7 +555,7 @@ SELECT ?s ?slabel ?file ?p
                        a("KAA: Image" , href="/kaa",cls="navbar-brand")
                        with form(cls="navbar-form navbar-left", role="search", action="/api/full-text-search"):
                            with div(cls="form-group"):
-                               input(id="q", name="q", type="text",cls="form-control",placeholder="Search...")
+                               input_(id="q", name="q", type="text",cls="form-control",placeholder="Search...")
                        with ul(cls="nav navbar-nav"):
                            with li(cls="dropdown"):
                                a("Example Searches", href="#",cls="dropdown-toggle", data_toggle="dropdown")
