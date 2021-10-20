@@ -144,7 +144,7 @@ SELECT ?p ?o ?plabel ?pcomment ?pxorder ?olabel  WHERE
      ?s ?p <%s> }
      OPTIONAL  { ?s <http://www.w3.org/2000/01/rdf-schema#label> ?slabel . }
      OPTIONAL  { ?s <http://xmlns.com/foaf/0.1/name> ?slabel . }
-     OPTIONAL { ?s kaaont:file|kaaont:pagescan|kaaont:photograph|kaaont:drawing ?sthumb . FILTER regex(?sthumb, '(jpg|png)$')  }
+     OPTIONAL { ?s kaaont:file|kaaont:pagescan|kaaont:photograph|kaaont:reverse-photograph|kaaont:obverse-photograph|kaaont:drawing ?sthumb . FILTER regex(?sthumb, '(jpg|png)$')  }
      } } ORDER BY ?s ?slabel""" % (uri,uri,uri)
         #reasoner.setQuery(physicalquery)
         #reasoner.setReturnFormat(JSON)
