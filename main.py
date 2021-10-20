@@ -158,7 +158,7 @@ SELECT ?p ?o ?plabel ?pcomment ?pxorder ?olabel  WHERE
      UNION  { ?s <http://kenchreai.org/kaa/ontology/same-as> <%s> .  }
      OPTIONAL  { ?s <http://kenchreai.org/kaa/ontology/next> <%s> . ?s ?p <%s> }
      OPTIONAL  { ?s <http://www.w3.org/2000/01/rdf-schema#label> ?slabel . }\
-     OPTIONAL { ?s kaaont:file|kaaont:pagescan|kaaont:photograph|kaaont:drawing ?sthumb . FILTER regex(?sthumb, '(jpg|png)$') } }
+     OPTIONAL { ?s kaaont:file|kaaont:pagescan|kaaont:photograph|kaaont:reverse-photograph|kaaont:obverse-photograph|kaaont:drawing ?sthumb . FILTER regex(?sthumb, '(jpg|png)$') } }
      FILTER (!isBlank(?s))  } ORDER BY ?s ?slabel""" % (uri,uri,uri,uri)
         #reasoner.setQuery(conceptualquery)
         #reasoner.setReturnFormat(JSON)
@@ -176,7 +176,7 @@ PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
   ?o rdfs:label ?olabel .
   ?o rdf:type ?otype .
    OPTIONAL { ?o kaaont:typological-identification ?otypology }
-   OPTIONAL { ?o kaaont:file|kaaont:pagescan|kaaont:photograph|kaaont:drawing ?othumb . FILTER regex(?othumb, '(jpg|png)$') } 
+   OPTIONAL { ?o kaaont:file|kaaont:pagescan|kaaont:photograph|kaaont:reverse-photograph|kaaont:obverse-photograph|kaaont:drawing ?othumb . FILTER regex(?othumb, '(jpg|png)$') } 
    FILTER isIRI(?o)
    } ORDER BY ?otype ?o  LIMIT 4000""" % (uri)
         #reasoner.setQuery(morequery)
@@ -429,7 +429,7 @@ PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                     (?l ?score) <tag:stardog:api:property:textMatch> ( '%s' 2000).
                     ?s ?p ?l . 
                     ?s rdfs:label ?slabel .
-                    OPTIONAL { ?s kaaont:drawing|kaaont:photograph ?sthumb . FILTER regex(?sthumb, '(jpg|png)$') }
+                    OPTIONAL { ?s kaaont:drawing|kaaont:photograph|kaaont:reverse-photograph|kaaont:obverse-photograph ?sthumb . FILTER regex(?sthumb, '(jpg|png)$') }
                     } ORDER BY ?s ?slabel""" % (q)
         ftquery = """PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX text: <http://jena.apache.org/text#>
