@@ -5,5 +5,5 @@ folium
 gunicorn
 Jinja2
 pandas
-rdflib
+rdflib>=6.0.0
 Werkzeug
