@@ -154,7 +154,7 @@ SELECT ?p ?o ?plabel ?pcomment ?pxorder ?olabel  WHERE
         conceptualquery = """PREFIX kaaont: <http://kenchreai.org/kaa/ontology/>
 
     SELECT  ?s ?p ?slabel ?sthumb WHERE
-     { {  { <%s> kaaont:has-logical-part+ ?s . }
+     { {  { <%s> kaaont:has-logical-part ?s . }
      UNION  { ?s <http://kenchreai.org/kaa/ontology/same-as> <%s> .  }
      OPTIONAL  { ?s <http://kenchreai.org/kaa/ontology/next> <%s> . ?s ?p <%s> }
      OPTIONAL  { ?s <http://www.w3.org/2000/01/rdf-schema#label> ?slabel . }\
