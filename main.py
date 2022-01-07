@@ -37,11 +37,11 @@ app = Flask(__name__)
 
 # 'endpoint' does not have reasoning enabled. 'reasoner' does.
 
-endpoint_store = rdf.plugin.get("SPARQLStore", rdf.store.Store)(endpoint="http://kenchreai.org:3030/kaa_endpoint/sparql",
+endpoint_store = rdf.plugins.stores.sparqlstore.SPARQLStore(query_endpoint = "http://kenchreai.org:3030/kaa_endpoint/sparql",
                                                        context_aware = False,
                                                        returnFormat = 'json')
 
-reasoner_store = rdf.plugin.get("SPARQLStore", rdf.store.Store)(endpoint="http://kenchreai.org:3030/kaa_reasoner/sparql",
+reasoner_store = rdf.plugins.stores.sparqlstore.SPARQLStore(query_endpoint = "http://kenchreai.org:3030/kaa_reasoner/sparql",
                                                        context_aware = False,
                                                        returnFormat = 'json')
 
@@ -154,7 +154,7 @@ SELECT ?p ?o ?plabel ?pcomment ?pxorder ?olabel  WHERE
         conceptualquery = """PREFIX kaaont: <http://kenchreai.org/kaa/ontology/>
 
     SELECT  ?s ?p ?slabel ?sthumb WHERE
-     { {  { <%s> <http://kenchreai.org/kaa/ontology/has-logical-part> ?s . }
+     { {  { <%s> kaaont:has-logical-part+ ?s . }
      UNION  { ?s <http://kenchreai.org/kaa/ontology/same-as> <%s> .  }
      OPTIONAL  { ?s <http://kenchreai.org/kaa/ontology/next> <%s> . ?s ?p <%s> }
      OPTIONAL  { ?s <http://www.w3.org/2000/01/rdf-schema#label> ?slabel . }\
