@@ -4,6 +4,7 @@ Flask
 folium
 gunicorn
 Jinja2
+markdown
 pandas
 rdflib>=6.0.0
 Werkzeug

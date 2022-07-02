@@ -1,6 +1,7 @@
 # This code needs more comments, no doubt about that.
 # Distributed "AS IS"
 
+import json
 import os
 import re
 import urllib.parse
@@ -17,6 +18,10 @@ from flask import Flask
 from flask import render_template
 from flask import request
 from flask import redirect, url_for, after_this_request
+
+from string import Template
+
+import markdown
 
 import pandas as pd
 
@@ -615,13 +620,61 @@ def geojson_entity(kaapath):
             for row in geojsonr:
                 pass
 
-@app.route('/api/kthcatalog')
-def kthcatalog():
-    kth = 'http://kenchreai.org/kaa/kth/'
-    with urllib.request.urlopen('https://etherpad.net/p/kth-catalog/export/txt') as response:
-        txt = response.read().decode('utf-8')
+def format_kaa_reference(match):
+    endpoint_store = rdf.plugins.stores.sparqlstore.SPARQLStore(query_endpoint = "http://kenchreai.org:3030/kaa_endpoint/sparql", context_aware = False) #,
+                                                       #returnFormat = 'json')
+    g = rdf.Graph(endpoint_store)
+
+    groups = match.groups()
     
-    endpoint = SPARQLWrapper("http://kenchreai.org/endpoint/kenchreai/query")
+    describe_query = f"DESCRIBE <http://kenchreai.org/kaa/{groups[0]}>"
+    results = g.query(describe_query)
+
+    txt = f'<a href="/kaa/{groups[0]}">{groups[0]}</a>' + json.dumps([[str(x[1]),str(x[2])] for x in results])
+
+    return txt
+
+@app.route('/api/kaa-catalog/<path:catalog_id>')
+def kaacatalog(catalog_id):
+
+    endpoint_store = rdf.plugins.stores.sparqlstore.SPARQLStore(query_endpoint = "http://kenchreai.org:3030/kaa_endpoint/sparql",
+                                                       context_aware = False,
+                                                       returnFormat = 'json')
+
+    
+    catalog_text_url = 'http://kenchreai.github.io/kaa-catalogs/test.md'
+    
+    with urllib.request.urlopen(catalog_text_url) as response:
+        unformatted_txt = response.read().decode('utf-8')
+
+    pre_md =  re.sub(r'\[urn:kaa:([^ \]]+?)( ([^\]]+?)]|])', format_kaa_reference, unformatted_txt)
+    as_md = markdown.markdown(pre_md)
+
+    cat_doc = dominate.document(title="Catalog")
+    cat_doc.head += link(rel='stylesheet', href="http://jasonm23.github.io/markdown-css-themes/markdown.css")
+    with cat_doc:
+        body(raw(as_md))
+
+    return cat_doc.render()
+
+
+
+    
+ 
+
+    
+
+
+
+
+
+def kthcatalog():
+    endpoint_store = rdf.plugins.stores.sparqlstore.SPARQLStore(query_endpoint = "http://kenchreai.org:3030/kaa_endpoint/sparql",
+                                                       context_aware = False,
+                                                       returnFormat = 'json')
+    with urllib.request.urlopen('http://kenchreai.github.io/kaa-catalogs/kth-catalog.md') as response:
+        txt = response.read().decode('utf-8')
+ 
     kthcatquery = '''PREFIX kaaont: <http://kenchreai.org/kaa/ontology/>
     SELECT ?s ?p ?o  WHERE {
   ?s kaaont:comment "KTHPUBCAT" .
