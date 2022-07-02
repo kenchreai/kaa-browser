@@ -634,7 +634,7 @@ def format_kaa_reference(match):
 
     return txt
 
-@app.route('/kaa/catalogs/<path:catalog_id>')
+@app.route('/catalogs/<path:catalog_id>')
 def kaacatalog(catalog_id):
 
     endpoint_store = rdf.plugins.stores.sparqlstore.SPARQLStore(query_endpoint = "http://kenchreai.org:3030/kaa_endpoint/sparql",
