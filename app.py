@@ -424,27 +424,15 @@ def fulltextsearch():
     if qexists == True:
 
         q = q.lower()
-        ftquery = """PREFIX kaaont: <http://kenchreai.org/kaa/ontology/>
-        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
-
-                    SELECT DISTINCT ?s ?slabel ?sthumb
-                    WHERE {
-                    (?l ?score) <tag:stardog:api:property:textMatch> ( '%s' 2000).
-                    ?s ?p ?l . 
-                    ?s rdfs:label ?slabel .
-                    OPTIONAL { ?s kaaont:drawing|kaaont:photograph|kaaont:reverse-photograph|kaaont:obverse-photograph ?sthumb . FILTER regex(?sthumb, '(jpg|png)$') }
-                    } ORDER BY ?s ?slabel""" % (q)
         ftquery = """PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX text: <http://jena.apache.org/text#>
 PREFIX kaaont: <http://kenchreai.org/kaa/ontology/>
 
-PREFIX ex: <http://example.org/>
 
 SELECT ?s ?slabel
 WHERE { 
-    ?s text:query (ex:textFields '%s') ;
+    ?s text:query (rdfs:label '%s') ;
        rdfs:label ?slabel .
 }""" % (q)
         #endpoint.setQuery(ftquery)
