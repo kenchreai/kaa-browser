@@ -434,7 +434,7 @@ SELECT ?s ?slabel
 WHERE { 
     ?s text:query (rdfs:label '%s') ;
        rdfs:label ?slabel .
-}""" % (q)
+} ORDER BY ?s""" % (q)
         #endpoint.setQuery(ftquery)
         #endpoint.setReturnFormat(JSON)
         ftresult = endpoint.query(ftquery).json
