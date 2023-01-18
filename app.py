@@ -423,7 +423,7 @@ def fulltextsearch():
 
     if qexists == True:
 
-        q = q.lower()
+        q = q.lower().replace(' and ', ' AND ')
 
         ftquery = """PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX text: <http://jena.apache.org/text#>
