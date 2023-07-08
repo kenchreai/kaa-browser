@@ -618,19 +618,60 @@ def format_kaa_reference(match):
     describe_query = f"DESCRIBE <http://kenchreai.org/kaa/{groups[0]}>"
     results = g.query(describe_query)
 
-    txt = f'<a href="/kaa/{groups[0]}">{groups[0]}</a>' + json.dumps([[str(x[1]),str(x[2])] for x in results])
+    [[str(x[1]),str(x[2])] for x in results]
+
+    link = f'<a href="/kaa/{groups[0]}">{groups[0]}</a>'
+
+
+
+    txt = f'''{link}
+    
+    '''
+    
+    
+     # + json.dumps([[str(x[1]),str(x[2])] for x in results])
 
     return txt
 
 @app.route('/catalogs/<path:catalog_id>')
 def kaacatalog(catalog_id):
+    catalog_text_url = f'http://kenchreai.github.io/kaa-catalogs/{catalog_id}.md'
+    with urllib.request.urlopen(catalog_text_url) as response:
+        unformatted_txt = response.read().decode('utf-8')
+
+    pattern = r'\[urn:kaa:([^ \]]+?)( ([^\]]+?)]|\])'
+
+    occurrences = re.findall(pattern, unformatted_txt)
+
+    identifiers = '> <http://kenchreai.org/kaa/'.join([x[0] for x in occurrences])
+    identifiers = f'<http://kenchreai.org/kaa/{identifiers}>'
+
+    store = rdf.plugins.stores.sparqlstore.SPARQLStore(query_endpoint = "http://kenchreai.org:3030/kaa_endpoint/sparql",
+                                           context_aware = False,
+                                           returnFormat = 'json')
+    g = rdf.Graph(store)
+    qt = Template("""
+    SELECT *  WHERE {
+    VALUES ?s { $identifiers }
+    ?s ?p ?o }
+""")
+
+    results = g.query(qt.substitute(identifiers = identifiers))
+    id_df = pd.DataFrame(results, columns = results.json['head']['vars'])
+    id_df = id_df.applymap(str)
+
+    return id_df.to_html()
+
+
+
+def kaacatalog_old(catalog_id):
 
     endpoint_store = rdf.plugins.stores.sparqlstore.SPARQLStore(query_endpoint = "http://kenchreai.org:3030/kaa_endpoint/sparql",
                                                        context_aware = False,
                                                        returnFormat = 'json')
 
     
-    catalog_text_url = 'http://kenchreai.github.io/kaa-catalogs/test.md'
+    catalog_text_url = f'http://kenchreai.github.io/kaa-catalogs/{catalog_id}.md'
     
     with urllib.request.urlopen(catalog_text_url) as response:
         unformatted_txt = response.read().decode('utf-8')
@@ -649,10 +690,6 @@ def kaacatalog(catalog_id):
 
     
  
-
-    
-
-
 
 
 
