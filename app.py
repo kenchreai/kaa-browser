@@ -671,12 +671,25 @@ def kaacatalog(catalog_id):
     for o in occurrence_tuples:
         urn_html_dict[f'http://kenchreai.org/kaa/{o[0]}'] = format_kaa_reference_from_df(ids_df.loc[f'http://kenchreai.org/kaa/{o[0]}'],o[2])
 
-    return "<br>\n".join(urn_html_dict.values())
+
+    pre_md =  re.sub(r'\[urn:kaa:([^ \]]+?)( ([^\]]+?)]|])', lambda match: urn_html_dict[f'http://kenchreai.org/kaa/{match.groups()[0]}'] , unformatted_txt)
+    as_md = markdown.markdown(pre_md)
+
+
+    cat_doc = dominate.document(title="Catalog")
+    cat_doc.head += link(rel='stylesheet', href="http://jasonm23.github.io/markdown-css-themes/markdown.css")
+    with cat_doc:
+        with body():  
+            raw(as_md)
+
+    return cat_doc.render()
+
 
 def format_kaa_reference_from_df(df, label):
-
+    # get subject
     url = df.index[0]
 
+    # since subject all the same, predicate is the useful index
     df.set_index('p', inplace=True)
 
     description = ''
@@ -711,16 +724,13 @@ def format_kaa_reference_from_df(df, label):
         else:
             photographs = f'<img src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/thumbs/{photographs}">'
 
-
-
     descriptive_fields = [description, fabric, preservation]
 
     return f'''
     <div class="kaa_entry">
         <div><a href="{url}">{label}</a>: {" ".join(descriptive_fields)}</div>
-        <div class="kaa_illustrations">{drawings} {photographs}</div>    
-    </div>
-    '''
+        <div class="kaa_illustrations">{drawings} {photographs}</div>
+    </div>'''.replace('\n', '') # markdown wants this all on one line
 
 def kaacatalog_old(catalog_id):
 
