@@ -639,11 +639,12 @@ def kaacatalog(catalog_id):
     with urllib.request.urlopen(catalog_text_url) as response:
         unformatted_txt = response.read().decode('utf-8')
 
-    pattern = r'\[urn:kaa:([^ \]]+?)( ([^\]]+?)]|\])'
+    pattern = r'\[urn:kaa:([^ \]]+?) (([^\]]+?)]|\])'
 
-    occurrences = re.findall(pattern, unformatted_txt)
+    occurrence_tuples = re.findall(pattern, unformatted_txt)
+    occurences = [x[0] for x in occurrence_tuples]
 
-    identifiers = '> <http://kenchreai.org/kaa/'.join([x[0] for x in occurrences])
+    identifiers = '> <http://kenchreai.org/kaa/'.join([x[0] for x in occurrence_tuples])
     identifiers = f'<http://kenchreai.org/kaa/{identifiers}>'
 
     store = rdf.plugins.stores.sparqlstore.SPARQLStore(query_endpoint = "http://kenchreai.org:3030/kaa_endpoint/sparql",
@@ -651,18 +652,75 @@ def kaacatalog(catalog_id):
                                            returnFormat = 'json')
     g = rdf.Graph(store)
     qt = Template("""
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
     SELECT *  WHERE {
     VALUES ?s { $identifiers }
-    ?s ?p ?o }
+    ?s ?p ?o .
+    ?s rdfs:label ?slabel .
+    OPTIONAL { ?o rdfs:label ?olabel }
+    OPTIONAL { ?p rdfs:label ?plabel }
+    }
 """)
 
     results = g.query(qt.substitute(identifiers = identifiers))
-    id_df = pd.DataFrame(results, columns = results.json['head']['vars'])
-    id_df = id_df.applymap(str)
+    ids_df = pd.DataFrame(results, columns = results.json['head']['vars'])
+    ids_df = ids_df.applymap(str)
+    ids_df.set_index('s', inplace=True)
 
-    return id_df.to_html()
+    urn_html_dict = {}
+    for o in occurrence_tuples:
+        urn_html_dict[f'http://kenchreai.org/kaa/{o[0]}'] = format_kaa_reference_from_df(ids_df.loc[f'http://kenchreai.org/kaa/{o[0]}'],o[2])
+
+    return "<br>\n".join(urn_html_dict.values())
+
+def format_kaa_reference_from_df(df, label):
+
+    url = df.index[0]
+
+    df.set_index('p', inplace=True)
+
+    description = ''
+    if 'http://kenchreai.org/kaa/ontology/description' in df.index:
+        description = df.loc['http://kenchreai.org/kaa/ontology/description']['o']
+        if isinstance(description, pd.Series): description = " ".join(description.to_list())
+
+    fabric = ''
+    if 'http://kenchreai.org/kaa/ontology/fabric-description' in df.index:
+        fabric = df.loc['http://kenchreai.org/kaa/ontology/fabric-description']['o']
+        if isinstance(fabric, pd.Series): fabric = " ".join(fabric.to_list())
+
+    preservation = ''
+    if 'http://kenchreai.org/kaa/ontology/preservation-comment' in df.index:
+        preservation = df.loc['http://kenchreai.org/kaa/ontology/preservation-comment']['o']
+        if isinstance(preservation, pd.Series): preservation = " ".join(preservation.to_list())
+
+    drawings = ''
+    if 'http://kenchreai.org/kaa/ontology/drawing' in df.index:
+        drawings = df.loc['http://kenchreai.org/kaa/ontology/drawing']['o']
+        if isinstance(drawings, pd.Series):
+            drawings = " ".join([f'<img src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/thumbs/{i}">' for i in drawings.to_list()])
+        else:
+            drawings = f'<img src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/thumbs/{drawings}">'
 
 
+    photographs = ''
+    if 'http://kenchreai.org/kaa/ontology/photograph' in df.index:
+        photographs = df.loc['http://kenchreai.org/kaa/ontology/photograph']['o']
+        if isinstance(photographs, pd.Series):
+            photographs = " ".join([f'<img src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/thumbs/{i}">' for i in photographs.to_list()])
+        else:
+            photographs = f'<img src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/thumbs/{photographs}">'
+
+
+
+    descriptive_fields = [description, fabric, preservation]
+
+    return f'''
+    <div class="kaa_entry">
+        <div><a href="{url}">{label}</a>: {" ".join(descriptive_fields)}</div>
+        <div class="kaa_illustrations">{drawings} {photographs}</div>    
+    </div>
+    '''
 
 def kaacatalog_old(catalog_id):
 
