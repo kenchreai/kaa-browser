@@ -692,6 +692,20 @@ def format_kaa_reference_from_df(df, label):
     # since subject all the same, predicate is the useful index
     df.set_index('p', inplace=True)
 
+    est_rim_diam = ''
+    if 'http://kenchreai.org/kaa/ontology/rim-diameter-estimated' in df.index:
+        est_rim_diam = df.loc['http://kenchreai.org/kaa/ontology/rim-diameter-estimated']['o']
+        if isinstance(est_rim_diam, pd.Series): est_rim_diam = " ".join(est_rim_diam.to_list())
+        est_rim_diam = f'Est. rim diam. {est_rim_diam}.'
+
+    rim_diam = ''
+    if 'http://kenchreai.org/kaa/ontology/rim-diameter' in df.index:
+        rim_diam = df.loc['http://kenchreai.org/kaa/ontology/rim-diameter']['o']
+        if isinstance(rim_diam, pd.Series): rim_diam = " ".join(rim_diam.to_list())
+        rim_diam = f'Rim diam. {rim_diam}.'
+
+    measurements = f"{' '.join([est_rim_diam, rim_diam])}"
+
     description = ''
     if 'http://kenchreai.org/kaa/ontology/description' in df.index:
         description = df.loc['http://kenchreai.org/kaa/ontology/description']['o']
@@ -706,6 +720,18 @@ def format_kaa_reference_from_df(df, label):
     if 'http://kenchreai.org/kaa/ontology/preservation-comment' in df.index:
         preservation = df.loc['http://kenchreai.org/kaa/ontology/preservation-comment']['o']
         if isinstance(preservation, pd.Series): preservation = " ".join(preservation.to_list())
+
+    published_as = ''
+    if 'http://kenchreai.org/kaa/ontology/published-as' in df.index:
+        published_as = df.loc['http://kenchreai.org/kaa/ontology/published-as']['o']
+        if isinstance(published_as, pd.Series): published_as = " ".join(published_as.to_list())
+        published_as = f'<div style="margin-top:.5em"><i>Published as:</i> {format_citations(published_as)}</div>'
+
+    comparanda = ''
+    if 'http://kenchreai.org/kaa/ontology/comparanda' in df.index:
+        comparanda = df.loc['http://kenchreai.org/kaa/ontology/comparanda']['o']
+        if isinstance(comparanda, pd.Series): comparanda = " ".join(comparanda.to_list())
+        comparanda = f'<div><i>Comparanda:</i> {format_citations(comparanda)}</div>'
 
     drawings = ''
     if 'http://kenchreai.org/kaa/ontology/drawing' in df.index:
@@ -727,10 +753,13 @@ def format_kaa_reference_from_df(df, label):
     descriptive_fields = [description, fabric, preservation]
 
     return f'''
-    <div class="kaa_entry">
-        <div><a href="{url}">{label}</a>: {" ".join(descriptive_fields)}</div>
-        <div class="kaa_illustrations">{drawings} {photographs}</div>
-    </div>'''.replace('\n', '') # markdown wants this all on one line
+    <div class="kaa_entry" style="margin-top:.75em">
+        <div><a href="{url}">{label}</a>: {measurements}</div>
+        <div>{" ".join(descriptive_fields)}</div>
+        {published_as}
+        {comparanda}
+        <div class="kaa_illustrations" style="margin-top:.5em">{drawings} {photographs}</div>
+    </div>'''.replace('\n', '') # markdown wants this all on one line. and resonably so.
 
 def kaacatalog_old(catalog_id):
 
