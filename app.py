@@ -739,7 +739,11 @@ def format_kaa_reference_from_df(df, label):
         if isinstance(drawings, pd.Series):
             drawings = " ".join([f'<img src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/thumbs/{i}">' for i in drawings.to_list()])
         else:
-            drawings = f'<img src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/thumbs/{drawings}">'
+            if '/' in drawings:
+                drawings = re.sub(r"(/[^/]+$)",r"/thumbs\1",drawings)
+            else:
+                drawings = 'thumbs/' + drawings
+            drawings = f'<img src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/{drawings}">'
 
 
     photographs = ''
@@ -748,7 +752,11 @@ def format_kaa_reference_from_df(df, label):
         if isinstance(photographs, pd.Series):
             photographs = " ".join([f'<img src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/thumbs/{i}">' for i in photographs.to_list()])
         else:
-            photographs = f'<img src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/thumbs/{photographs}">'
+            if '/' in photographs:
+                photographs = re.sub(r"(/[^/]+$)",r"/thumbs\1",photographs)
+            else:
+                photographs = 'thumbs/' + photographs
+            photographs = f'<img src="http://kenchreai-archaeological-archive-files.s3-website-us-west-2.amazonaws.com/{photographs}">'
 
     descriptive_fields = [description, fabric, preservation]
 
