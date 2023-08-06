@@ -91,7 +91,7 @@ def kaafooter(doc, kaapath = '', editorLink = False ):
         with footer(cls="footer noprint"):
             with div(cls="container"):
                 with p(cls="text-muted"):
-                    span("©2017 The ")
+                    span("©2017-2023 The ")
                     a("American Excavations at Kenchreai", href="http://www.kenchreai.org")
                     span(". Data and images available for non-commercial, personal use only. See ")
                     a("Github", href="https://github.com/kenchreai/kaa-ttl")
@@ -733,6 +733,13 @@ def format_kaa_reference_from_df(df, label):
         if isinstance(comparanda, pd.Series): comparanda = " ".join(comparanda.to_list())
         comparanda = f'<div><i>Comparanda:</i> {format_citations(comparanda)}</div>'
 
+    bibliography = ''
+    if 'http://kenchreai.org/kaa/ontology/bibliography' in df.index:
+        bibliography = df.loc['http://kenchreai.org/kaa/ontology/bibliography']['o']
+        if isinstance(bibliography, pd.Series): bibliography = " ".join(bibliography.to_list())
+        bibliography = f'<div style="margin-top:.5em"><i>Bibliography:</i> {format_citations(bibliography)}</div>'
+
+
     drawings = ''
     if 'http://kenchreai.org/kaa/ontology/drawing' in df.index:
         drawings = df.loc['http://kenchreai.org/kaa/ontology/drawing']['o']
@@ -766,6 +773,7 @@ def format_kaa_reference_from_df(df, label):
         <div>{" ".join(descriptive_fields)}</div>
         {published_as}
         {comparanda}
+        {bibliography}
         <div class="kaa_illustrations" style="margin-top:.5em">{drawings} {photographs}</div>
     </div>'''.replace('\n', '') # markdown wants this all on one line. and resonably so.
 
