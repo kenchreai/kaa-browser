@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 from dominate.tags import *
 from dominate.util import raw
 
-from flask import Flask, request, send_from_directory
+from flask import Flask, request, Response, send_from_directory
 
 from string import Template
 
@@ -41,11 +41,11 @@ app.logger.setLevel(logging.DEBUG)
 
 # 'endpoint' does not have reasoning enabled. 'reasoner' does.
 
-endpoint_store = rdf.plugins.stores.sparqlstore.SPARQLStore(query_endpoint="http://localhost:3030/kaa/sparql",
+endpoint_store = rdf.plugins.stores.sparqlstore.SPARQLStore(query_endpoint=os.environ.get('DB_KAA_ENDPOINT'),
                                                             context_aware=False,
                                                             returnFormat='json')
 
-reasoner_store = rdf.plugins.stores.sparqlstore.SPARQLStore(query_endpoint="http://localhost:3030/kaa_reasoner/sparql",
+reasoner_store = rdf.plugins.stores.sparqlstore.SPARQLStore(query_endpoint=os.environ.get('DB_KAA_REASONER_ENDPOINT'),
                                                             context_aware=False,
                                                             returnFormat='json')
 
@@ -71,7 +71,7 @@ def kaaheader(doc, kaapath=''):
                      integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u", crossorigin="anonymous")
     doc.head += link(rel="stylesheet", href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css",
                      integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp", crossorigin="anonymous")
-    doc.head += script(src="http://code.jquery.com/jquery-3.1.1.min.js")
+    doc.head += script(src="https://code.jquery.com/jquery-3.1.1.min.js")
     doc.head += script(src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js",
                        integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa", crossorigin="anonymous")
     doc.head += style("""
@@ -85,10 +85,29 @@ def kaaheader(doc, kaapath=''):
     content: none !important;
   }
 }
+
+.thumbnail-image {
+    height: 13.5rem;
+    width: auto;
+}
+
+.thumbnail-container {
+}
+
+.dl-horizontal dd {
+    margin-bottom: .5em;
+}
+
+@media (min-width: 768px) {
+    .dl-horizontal dd {
+        margin-left: 19em;
+    }
+}
+
 body { padding-top: 60px; }""")
     doc.head += meta(name="DC.title", lang="en", content="%s" % (kaapath))
     doc.head += meta(name="DC.identifier",
-                     content="http://kenchreai.org/kaa/%s" % kaapath)
+                     content="https://kenchreai.org/kaa/%s" % kaapath)
 
 
 def kaafooter(doc, kaapath='', editorLink=False):
@@ -98,7 +117,7 @@ def kaafooter(doc, kaapath='', editorLink=False):
                 with p(cls="text-muted"):
                     span("©2017-2023 The ")
                     a("American Excavations at Kenchreai",
-                      href="http://www.kenchreai.org")
+                      href="https://kenchreai.org")
                     span(
                         ". Data and images available for non-commercial, personal use only. See ")
                     a("Github", href="https://github.com/kenchreai/kaa-ttl")
@@ -111,13 +130,7 @@ def kaafooter(doc, kaapath='', editorLink=False):
 @app.route('/kaa/<path:kaapath>')
 @app.route('/kaa')
 def kaasparql(kaapath='kaa'):
-
-    more = request.args.get('more')
-
-    if more == 'true':
-        more = True
-    else:
-        more = False
+    more = True
 
     if kaapath == 'kaa':
         uri = 'http://kenchreai.org/kaa'
@@ -166,12 +179,12 @@ SELECT ?p ?o ?plabel ?pcomment ?pxorder ?olabel  WHERE
         conceptualquery = """PREFIX kaaont: <http://kenchreai.org/kaa/ontology/>
 
     SELECT  ?s ?p ?slabel ?sthumb WHERE
-     { {  { <%s> kaaont:has-logical-part ?s . }
-     UNION  { ?s <http://kenchreai.org/kaa/ontology/same-as> <%s> .  }
-     OPTIONAL  { ?s <http://kenchreai.org/kaa/ontology/next> <%s> . ?s ?p <%s> }
+     { {  { ?s kaaont:is-logical-part-of <%s> . }
+     UNION  { ?s kaaont:same-as <%s> .  }
+     OPTIONAL  { ?s kaaont:next <%s> . ?s ?p <%s> }
      OPTIONAL  { ?s <http://www.w3.org/2000/01/rdf-schema#label> ?slabel . }\
      OPTIONAL { ?s kaaont:file|kaaont:pagescan|kaaont:photograph|kaaont:reverse-photograph|kaaont:obverse-photograph|kaaont:drawing ?sthumb . FILTER regex(?sthumb, '(jpg|png)$') } }
-     FILTER (!isBlank(?s))  } ORDER BY ?s ?slabel""" % (uri, uri, uri, uri)
+     FILTER (!isBlank(?s))  } ORDER BY ?slabel""" % (uri, uri, uri, uri)
         # reasoner.setQuery(conceptualquery)
         # reasoner.setReturnFormat(JSON)
         conceptualresult = reasoner.query(conceptualquery).json
@@ -183,14 +196,14 @@ SELECT ?p ?o ?plabel ?pcomment ?pxorder ?olabel  WHERE
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
 
-  SELECT DISTINCT ?o ?olabel ?othumb WHERE {
-  <%s> ^kaaont:is-part-of+ ?o .
-  ?o rdfs:label ?olabel .
-  ?o rdf:type ?otype .
-   OPTIONAL { ?o kaaont:typological-identification ?otypology }
-   OPTIONAL { ?o kaaont:file|kaaont:pagescan|kaaont:photograph|kaaont:reverse-photograph|kaaont:obverse-photograph|kaaont:drawing ?othumb . FILTER regex(?othumb, '(jpg|png)$') } 
-   FILTER isIRI(?o)
-   } ORDER BY ?otype ?o  LIMIT 4000""" % (uri)
+  SELECT DISTINCT ?s ?olabel ?othumb WHERE {
+  ?s ?p <%s> .
+  ?s rdfs:label ?olabel .
+  ?s rdf:type ?otype .
+   OPTIONAL { ?s kaaont:typological-identification ?otypology }
+   OPTIONAL { ?s kaaont:file|kaaont:pagescan|kaaont:photograph|kaaont:reverse-photograph|kaaont:obverse-photograph|kaaont:drawing ?othumb . FILTER regex(?othumb, '(jpg|png)$') } 
+   FILTER isIRI(?s)
+   } ORDER BY ?otype ?s  LIMIT 12000""" % (uri)
         # reasoner.setQuery(morequery)
         # reasoner.setReturnFormat(JSON)
         moreresult = reasoner.query(morequery).json
@@ -247,19 +260,9 @@ SELECT ?slabel ?stype
                     a('permalink', href=uri)
                     span('] ')
                     span(id="next")
-                    if (more == False) and (uri not in suppressmore):
-                        span(' [')
-                        a('show more links', href='/kaa/'+kaapath+'?more=true',
-                          title='Clicking here will cause the database to search for linked resources more aggresively. Can take a long time!')
-                        span('] ')
-                    if (more == True):
-                        span(' [')
-                        a('show fewer links', href='/kaa/'+kaapath,
-                          title='Clicking here will cause the database to show only directly lined resources')
-                        span('] ')
 
                 if pagetype != '':
-                    dt("Type", style="white-space: nowrap; width:12em")
+                    dt("Type", style="white-space: nowrap; width:18em; margin-right:1em;")
                     dd(pagetype)
 
                 for row in kaaresult["results"]["bindings"]:
@@ -278,10 +281,10 @@ SELECT ?slabel ?stype
                         continue
                     elif "plabel" in row.keys():
                         dt(row["plabel"]["value"],
-                           style="white-space: nowrap; width:12em", title=pcomment)
+                           style="white-space: nowrap; width:18em; margin-right:1em;", title=pcomment)
                     else:
                         dt(i(row["p"]["value"]),
-                           style="white-space: normal; width:12em")
+                           style="white-space: normal; width:18em; margin-right:1em;")
 
                     with dd():
                         rkeys = row.keys()
@@ -291,10 +294,10 @@ SELECT ?slabel ?stype
                             olabel = row["o"]["value"]
 
                         if re.search('(\.png|\.jpg)$', row["o"]["value"], flags=re.I):
-                            a(img(style="max-width:600px;max-height:350px", src="https://kaa-images.s3-website.us-east-2.amazonaws.com/%s" %
+                            a(img(style="max-width:600px;max-height:350px", src="https://kaa-images.s3.us-east-2.amazonaws.com/%s" %
                               row["o"]["value"]), href="/api/display-image-file?q=%s" % row["o"]["value"])
                         elif re.search('(\.pdf|\.tif|\.tiff)$', row["o"]["value"], flags=re.I):
-                            iframe(src="http://docs.google.com/gview?url=https://kaa-images.s3-website.us-east-2.amazonaws.com/%s&embedded=true" %
+                            iframe(src="https://docs.google.com/gview?url=https://kaa-images.s3.us-east-2.amazonaws.com/%s&embedded=true" %
                                    row["o"]["value"], style="width:600px; height:500px;", frameborder="0")
                         elif row["o"]["value"][0:4] == 'http':
                             a(olabel, href=row["o"]["value"].replace(
@@ -307,35 +310,66 @@ SELECT ?slabel ?stype
                         dt('Linked to', style="margin-top:.75em",
                            title="All linked resources", cls="noprint")
                         curlabel = ''
-                        first = 0
+                        first = True
                         with dd(style="margin-top:1em", cls="noprint"):
-                            for row in moreresult["results"]["bindings"]:
-                                if "olabel" in row.keys():
-                                    label = row["olabel"]["value"]
-                                else:
+                            linked_items = {}
+
+                            for result in moreresult["results"]["bindings"]:
+                                subject = result['s']['value']
+                                item = {'thumbs': []}
+                                try:
+                                    item = linked_items[subject]
+                                except KeyError:
+                                    linked_items[subject] = item
+
+                                if result.get('olabel'):
+                                    item['label'] = result['olabel']['value']
+
+                                if result.get('othumb'):
+                                    item['thumbs'].append(
+                                        result['othumb']['value'])
+
+                            for subject, statements in linked_items.items():
+                                label = statements.get('label')
+
+                                if not label:
                                     label = re.sub(
                                         'http://kenchreai.org/kaa/', 'kaa:', row["o"]["value"])
+                                thumbs = []
 
-                                if curlabel != label:
-                                    curlabel = label
-                                    if first == 1:
-                                        first = 0
-                                        pstyle = ''
-                                    else:
-                                        pstyle = 'border-top: thin dotted #aaa'
-
-                                    p(a(label, style=pstyle, rel="dcterms:hasPart", href=row["o"]["value"].replace(
-                                        'http://kenchreai.org', '')), cls="noprint")
-
-                                if 'othumb' in row.keys():
-                                    thumb = row["othumb"]["value"]
-                                    if '/' in thumb:
+                                for url in statements['thumbs']:
+                                    # if 'thumbs' in url and not 'thumbs' in url.split('/')[0]:
+                                    if '/' in url and 'drawings' not in url:
                                         thumb = re.sub(
-                                            r"(/[^/]+$)", r"/thumbs\1", thumb)
+                                            r"(/[^/]+$)", r"/thumbs\1", url)
                                     else:
-                                        thumb = 'thumbs/' + thumb
-                                    a(img(style="margin-left:1em;margin-bottom:15px;max-width:150px;max-height:150px", src="https://kaa-images.s3-website.us-east-2.amazonaws.com/%s" %
-                                      thumb), href=row["o"]["value"].replace('http://kenchreai.org', ''), cls="noprint")
+                                        thumb = 'thumbs/' + url
+                                    thumbs.append(
+                                        a(
+                                            img(
+                                                src='https://kaa-images.s3.us-east-2.amazonaws.com/%s' % thumb,
+                                                cls='thumbnail-image'
+                                            ),
+                                            href=subject.replace(
+                                                'http://kenchreai.org', ''),
+                                            cls="noprint",
+                                            style='display:contents;'
+                                        )
+                                    )
+
+                                div(
+                                    p(
+                                        a(
+                                            label,
+                                            rel="dcterms:hasPart",
+                                            href=subject.replace(
+                                                'http://kenchreai.org', '')
+                                        ),
+                                        cls="noprint"
+                                    ),
+                                    div(thumbs, cls='thumbnail-container') if thumbs else '',
+                                    style='margin-bottom: 4rem;'
+                                )
 
                 if more == False:
 
@@ -374,7 +408,7 @@ SELECT ?slabel ?stype
                                     else:
                                         thumb = 'thumbs/' + thumb
                                     a(img(style="margin-left:1em;margin-bottom:15px;max-width:150px;max-height:150px",
-                                      src="https://kaa-images.s3-website.us-east-2.amazonaws.com/%s" % thumb), href=row["s"]["value"].replace('http://kenchreai.org', ''))
+                                      src="https://kaa-images.s3.us-east-2.amazonaws.com/%s" % thumb), href=row["s"]["value"].replace('http://kenchreai.org', ''))
 
                     if len(conceptualresult["results"]["bindings"]) > 0:
                         dt('Linked to', style="margin-top:.75em", title="A list of resource that link back to the current resource. Used to display such relationships as Excavation Notebooks being documentation of Areas, Typological Identification of a particular object, Narrower terms in the archaeological typology, or assocaition with a Chronological period or modern year.", cls="noprint")
@@ -410,17 +444,17 @@ SELECT ?slabel ?stype
                                     else:
                                         thumb = 'thumbs/' + thumb
                                     a(img(style="margin-left:1em;margin-bottom:15px;max-width:150px;max-height:150px",
-                                      src="https://kaa-images.s3-website.us-east-2.amazonaws.com/%s" % thumb), href=row["s"]["value"].replace('http://kenchreai.org', ''))
+                                      src="https://kaa-images.s3.us-east-2.amazonaws.com/%s" % thumb), href=row["s"]["value"].replace('http://kenchreai.org', ''))
 
                     dt('Suggested citation', style="margin-top:.5em", cls="noprint")
                     # dd(raw("The American Excavations at Kenchreai. “{}.” <i>The Kenchreai Archaeological Archive</i>. {}. &lt;http://kenchreai.org/{}&gt;".format(pagelabel, strftime('%d %b. %Y'),kaapath)), style="margin-top:.5em")
                     if kaapath == 'kaa':
                         with dd(cls="noprint"):
-                            div(raw("J.L. Rife and S. Heath, eds. (2013-{}). <i>Kenchreai Archaeological Archive</i>. The American Excavations at Kenchreai. &lt;http://kenchreai.org/kaa&gt;".format(
+                            div(raw("J.L. Rife and S. Heath, eds. (2013-{}). <i>Kenchreai Archaeological Archive</i>. The American Excavations at Kenchreai. &lt;https://kenchreai.org/kaa&gt;".format(
                                 strftime('%Y'))), style="margin-top:.5em;margin-left:1.25em;text-indent:-1.25em")
                     else:
                         with dd():
-                            div(raw("“{}.” In <i>Kenchreai Archaeological Archive</i>, edited by J.L. Rife and S. Heath. The American Excavations at Kenchreai, 2013-{}. &lt;http://kenchreai.org/{}&gt;".format(
+                            div(raw("“{}.” In <i>Kenchreai Archaeological Archive</i>, edited by J.L. Rife and S. Heath. The American Excavations at Kenchreai, 2013-{}. &lt;https://kenchreai.org/{}&gt;".format(
                                 pagelabel.rstrip(), strftime('%Y'), kaapath)), style="margin-top:.5em;margin-left:1.25em;text-indent:-1.25em")
 
     kaafooter(kaadoc, kaapath, True)
@@ -539,7 +573,7 @@ WHERE {
                             else:
                                 thumb = 'thumbs/' + thumb
                             a(img(style="margin-left:1em;margin-bottom:15px;max-width:150px;max-height:150px",
-                              src="https://kaa-images.s3-website.us-east-2.amazonaws.com/%s" % thumb), href=row["s"]["value"].replace('http://kenchreai.org', ''))
+                              src="https://kaa-images.s3.us-east-2.amazonaws.com/%s" % thumb), href=row["s"]["value"].replace('http://kenchreai.org', ''))
 
     kaafooter(ftdoc)
 
@@ -548,9 +582,6 @@ WHERE {
 
 @app.route('/api/display-image-file')
 def display_image_file():
-    app.logger.info(request.remote_addr)
-    app.logger.info(request.remote_user)
-    return '</html></html>'
 
     q = request.args.get('q')
 
@@ -628,7 +659,7 @@ SELECT ?s ?slabel ?file ?p
 
                     # show the image itself
                     dt('')
-                    dd(img(src="https://kaa-images.s3-website.us-east-2.amazonaws.com/%s" %
+                    dd(img(src="https://kaa-images.s3.us-east-2.amazonaws.com/%s" %
                        imgsrc, style="width:100%"))
 
                     # show the file name
@@ -665,7 +696,8 @@ def geojson_entity(kaapath):
 
 def format_kaa_reference(match):
     endpoint_store = rdf.plugins.stores.sparqlstore.SPARQLStore(
-        query_endpoint="http://kenchreai.org:3030/kaa_endpoint/sparql", context_aware=False)  # ,
+        query_endpoint=os.environ.get('DB_KAA_ENDPOINT'),
+        context_aware=False)
     # returnFormat = 'json')
     g = rdf.Graph(endpoint_store)
 
@@ -702,7 +734,7 @@ def kaacatalog(catalog_id):
         [x[0] for x in occurrence_tuples])
     identifiers = f'<http://kenchreai.org/kaa/{identifiers}>'
 
-    store = rdf.plugins.stores.sparqlstore.SPARQLStore(query_endpoint="http://kenchreai.org:3030/kaa_endpoint/sparql",
+    store = rdf.plugins.stores.sparqlstore.SPARQLStore(query_endpoint=os.environ.get('DB_KAA_ENDPOINT'),
                                                        context_aware=False,
                                                        returnFormat='json')
     g = rdf.Graph(store)
@@ -808,26 +840,26 @@ def format_kaa_reference_from_df(df, label):
         drawings = df.loc['http://kenchreai.org/kaa/ontology/drawing']['o']
         if isinstance(drawings, pd.Series):
             drawings = " ".join(
-                [f'<img src="https://kaa-images.s3-website.us-east-2.amazonaws.com/thumbs/{i}">' for i in drawings.to_list()])
+                [f'<img src="https://kaa-images.s3.us-east-2.amazonaws.com/thumbs/{i}">' for i in drawings.to_list()])
         else:
             if '/' in drawings:
                 drawings = re.sub(r"(/[^/]+$)", r"/thumbs\1", drawings)
             else:
                 drawings = 'thumbs/' + drawings
-            drawings = f'<img src="https://kaa-images.s3-website.us-east-2.amazonaws.com/{drawings}">'
+            drawings = f'<img src="https://kaa-images.s3.us-east-2.amazonaws.com/{drawings}">'
 
     photographs = ''
     if 'http://kenchreai.org/kaa/ontology/photograph' in df.index:
         photographs = df.loc['http://kenchreai.org/kaa/ontology/photograph']['o']
         if isinstance(photographs, pd.Series):
             photographs = " ".join(
-                [f'<img src="https://kaa-images.s3-website.us-east-2.amazonaws.com/thumbs/{i}">' for i in photographs.to_list()])
+                [f'<img src="https://kaa-images.s3.us-east-2.amazonaws.com/thumbs/{i}">' for i in photographs.to_list()])
         else:
             if '/' in photographs:
                 photographs = re.sub(r"(/[^/]+$)", r"/thumbs\1", photographs)
             else:
                 photographs = 'thumbs/' + photographs
-            photographs = f'<img src="https://kaa-images.s3-website.us-east-2.amazonaws.com/{photographs}">'
+            photographs = f'<img src="https://kaa-images.s3.us-east-2.amazonaws.com/{photographs}">'
 
     descriptive_fields = [description, fabric, preservation]
 
@@ -867,7 +899,7 @@ def kaacatalog_old(catalog_id):
 
 
 def kthcatalog():
-    endpoint_store = rdf.plugins.stores.sparqlstore.SPARQLStore(query_endpoint="http://kenchreai.org:3030/kaa_endpoint/sparql",
+    endpoint_store = rdf.plugins.stores.sparqlstore.SPARQLStore(query_endpoint=os.environ.get('DB_KAA_ENDPOINT'),
                                                                 context_aware=False,
                                                                 returnFormat='json')
     with urllib.request.urlopen('http://kenchreai.github.io/kaa-catalogs/kth-catalog.md') as response:
@@ -994,7 +1026,7 @@ h3,h4 {
                 else:
                     thumb = 'thumbs/' + thumb
 
-                html += f'<img src="https://kaa-images.s3-website.us-east-2.amazonaws.com/{thumb}"/>'
+                html += f'<img src="https://kaa-images.s3.us-east-2.amazonaws.com/{thumb}"/>'
             except Exception:
                 pass
 
@@ -1009,7 +1041,7 @@ h3,h4 {
                 else:
                     thumb = 'thumbs/' + thumb
 
-                html += f'<img src="https://kaa-images.s3-website.us-east-2.amazonaws.com/{thumb}"/>'
+                html += f'<img src="https://kaa-images.s3.us-east-2.amazonaws.com/{thumb}"/>'
             except Exception:
                 pass
             finally:
@@ -1026,6 +1058,33 @@ h3,h4 {
     html = re.sub(p, s, pre_citation_html, flags=re.S)
 
     return html
+
+
+@app.route('/api/dbproxy/<path:endpoint>', methods=['GET', 'POST'])
+def db_proxy(endpoint):
+    if (request.method != 'GET' and
+       request.headers.get('X-Front-Door-Key') != os.environ.get('FRONT_DOOR_KEY')):
+        return Response('Endpoint is public GET only', 401)
+    if request.method == 'GET':
+        url = os.environ.get('DB_KAA_ENDPOINT') + \
+            '?query=' + urllib.parse.quote(request.args.get('query'))
+        req = urllib.request.Request(url)
+        if request.headers.get('Accept'):
+            req.add_header('Accept', request.headers.get('Accept'))
+        response = urllib.request.urlopen(req).read().decode('utf-8')
+        return response
+
+    if request.method == 'POST' and endpoint == 'update':
+        data = urllib.parse.urlencode(
+            {'update': request.form.get('update')}).encode('utf-8')
+        req = urllib.request.Request(
+            os.environ.get('DB_KAA_UPDATE_ENDPOINT'), data=data, method='POST')
+        req.add_header('Accept', 'application/json')
+        req.add_header('Authorization', request.headers.get('Authorization'))
+        req.add_header('Content-Type', 'application/x-www-form-urlencoded')
+        response = urllib.request.urlopen(req).read()
+        return response
+    return '{}'
 
 
 @app.route('/')
