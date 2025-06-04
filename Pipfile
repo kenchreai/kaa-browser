@@ -1,0 +1,21 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+beautifulsoup4 = "*"
+dominate = "*"
+flask = "*"
+folium = "*"
+gunicorn = "*"
+jinja2 = "*"
+markdown = "*"
+pandas = "*"
+rdflib = ">=6.0.0"
+werkzeug = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.12"
