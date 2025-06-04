@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 from dominate.tags import *
 from dominate.util import raw
 
-from flask import Flask, request, Response, send_from_directory
+from flask import Flask, make_response, request, Response, send_from_directory
 
 from string import Template
 
@@ -1065,14 +1065,21 @@ def db_proxy(endpoint):
     if (request.method != 'GET' and
        request.headers.get('X-Front-Door-Key') != os.environ.get('FRONT_DOOR_KEY')):
         return Response('Endpoint is public GET only', 401)
+
     if request.method == 'GET':
         url = os.environ.get('DB_KAA_ENDPOINT') + \
             '?query=' + urllib.parse.quote(request.args.get('query'))
         req = urllib.request.Request(url)
         if request.headers.get('Accept'):
             req.add_header('Accept', request.headers.get('Accept'))
-        response = urllib.request.urlopen(req).read().decode('utf-8')
-        return response
+
+        response = urllib.request.urlopen(req)
+        body = response.read().decode('utf-8')
+        res = make_response(body, 200)
+
+        if 'sparql-results+json' in response.headers.get('Content-Type'):
+            res.headers['Content-Type'] = 'application/sparql-results+json'
+        return res
 
     if request.method == 'POST' and endpoint == 'update':
         data = urllib.parse.urlencode(
